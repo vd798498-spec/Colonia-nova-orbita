@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Colônia Estelar Nova Órbita</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Firebase SDK (modo compatível com arquivo único) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --space-bg: #070B19;
+      --space-shell: #0F172A;
+      --ink-dark: #090D16;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background-color: #050811;
+      background-image:
+        radial-gradient(circle at 20% 25%, rgba(168, 85, 247, 0.14) 0%, transparent 45%),
+        radial-gradient(circle at 80% 75%, rgba(56, 189, 248, 0.14) 0%, transparent 45%);
+      color: #F8FAFC;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    h1, h2, h3, .font-display {
+      font-family: 'Fredoka', sans-serif;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 440px;
+      background-color: var(--space-shell);
+      min-height: 100vh;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.7);
+      overflow-x: hidden;
+    }
+
+    @media (min-width: 480px) {
+      .app-shell {
+        margin: 12px 0;
+        min-height: calc(100vh - 24px);
+        border-radius: 34px;
+        border: 3px solid #334155;
+        overflow: hidden;
+      }
+    }
+
+    .btn-cosmic {
+      border: 2.5px solid #090D16;
+      box-shadow: 0 4px 0 #090D16;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+      font-weight: 800;
+      cursor: pointer;
+      user-select: none;
+    }
+    .btn-cosmic:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #090D16;
+    }
+
+    .btn-cosmic-sm {
+      border: 2px solid #090D16;
+      box-shadow: 0 3px 0 #090D16;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+      font-weight: 800;
+      cursor: pointer;
+      user-select: none;
+    }
+    .btn-cosmic-sm:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #090D16;
+    }
+
+    .colony-logo-text {
+      color: #A3E635;
+      text-shadow:
+        -2px -2px 0 #090D16,
+         2px -2px 0 #090D16,
+        -2px  2px 0 #090D16,
+         2px  2px 0 #090D16,
+         0px 4px 0 #090D16;
+    }
+
+    .orbit-card {
+      background: #F8FAFC;
+      color: #0F172A;
+      border-radius: 24px;
+      border: 2.5px solid #090D16;
+      box-shadow: 0 4px 0 rgba(9, 13, 22, 0.55);
+    }
+
+    @keyframes floatAlien {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+    }
+    .animate-float {
+      animation: floatAlien 3.2s ease-in-out infinite;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.95); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .tab-content {
+      animation: popIn 0.2s ease-out;
+    }
+
+    #toast-container {
+      position: fixed;
+      top: 72px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 120;
+      width: 90%;
+      max-width: 380px;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .nav-btn { color: #64748B; }
+    .nav-btn.active {
+      color: #A3E635;
+      background: rgba(132, 204, 22, 0.12);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-shell">
+    <div id="toast-container"></div>
+
+    <!-- TELA INICIAL DE ACESSO -->
+    <section id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050811]/95 backdrop-blur-md">
+      <div class="w-full max-w-[380px] bg-[#0F172A] border-[3px] border-[#334155] rounded-3xl p-5 shadow-2xl">
+        <div class="text-center mb-4">
+          <div class="inline-block px-3 py-1 rounded-full bg-[#1E1B4B] border border-[#84CC16] text-[#A3E635] text-[11px] font-black uppercase tracking-wider mb-2">
+            Acesso da Colônia
+          </div>
+          <h1 class="colony-logo-text font-display text-2xl font-bold leading-tight">
+            Colônia Nova Órbita
+          </h1>
+          <p class="text-slate-300 text-xs mt-1 font-semibold">
+            Entre com seu @ do TikTok e seu PIN único de até 4 dígitos.
+          </p>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label for="login-tiktok" class="block text-xs font-black text-slate-200 mb-1">
+              Coloque seu @ do TikTok:
+            </label>
+            <input
+              id="login-tiktok"
+              type="text"
+              maxlength="30"
+              placeholder="Coloque seu @ do TikTok"
+              onkeydown="if (event.key === 'Enter') { event.preventDefault(); handleLoginClick(); }"
+              class="w-full px-3.5 py-2.5 rounded-2xl bg-[#1E293B] text-white border-2 border-[#334155] focus:border-[#A3E635] focus:outline-none text-sm font-bold"
+            />
+          </div>
+
+          <div>
+            <label for="login-pin" class="block text-xs font-black text-slate-200 mb-1">
+              PIN único (até 4 dígitos):
+            </label>
+            <input
+              id="login-pin"
+              type="password"
+              inputmode="numeric"
+              maxlength="4"
+              placeholder="0000"
+              oninput="this.value = this.value.replace(/\D/g, '').slice(0, 4)"
+              onkeydown="if (event.key === 'Enter') { event.preventDefault(); handleLoginClick(); }"
+              class="w-full px-3.5 py-2.5 rounded-2xl bg-[#1E293B] text-white border-2 border-[#334155] focus:border-[#38BDF8] focus:outline-none text-sm font-black tracking-widest"
+            />
+          </div>
+
+          <p id="login-error" class="hidden text-xs font-extrabold text-rose-400 bg-rose-950/60 border border-rose-500/40 rounded-xl px-3 py-2"></p>
+
+          <button type="button" id="login-submit-btn" onclick="handleLoginClick()" class="btn-cosmic w-full py-3 rounded-2xl bg-[#84CC16] text-[#090D16] text-sm font-black mt-1">
+            Entrar na Conta
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CABEÇALHO SUPERIOR -->
+    <header class="sticky top-0 z-40 bg-[#0B1120]/95 backdrop-blur-md border-b-2 border-[#1E293B] px-3.5 py-2.5 flex items-center justify-between gap-2">
+      <button type="button" onclick="switchTab('inicio')" aria-label="Início" class="w-10 h-10 rounded-xl bg-[#1E1B4B] p-1.5 flex items-center justify-center shrink-0 border-2 border-[#84CC16] shadow-sm active:scale-95 transition">
+        <svg viewBox="0 0 36 36" class="w-full h-full">
+          <circle cx="18" cy="18" r="14" fill="#312E81"/>
+          <circle cx="18" cy="18" r="8" fill="#84CC16"/>
+          <ellipse cx="18" cy="18" rx="16" ry="5" fill="none" stroke="#FACC15" stroke-width="2.4" transform="rotate(-22 18 18)"/>
+        </svg>
+      </button>
+
+      <div class="flex items-center gap-1.5">
+        <span class="px-2.5 py-1 rounded-full bg-[#1E293B] border border-[#334155] text-[11px] font-black text-slate-200">
+          Dia <span id="header-day">1</span>
+        </span>
+        <button type="button" onclick="openAccountSwitcher()" class="btn-cosmic-sm px-2.5 py-1.5 rounded-full text-[11px] bg-[#1E293B] text-slate-100">
+          Trocar conta
+        </button>
+      </div>
+
+      <button type="button" onclick="switchTab('passe')" class="bg-[#1E293B] text-white px-3 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-extrabold border-2 border-[#38BDF8] shadow-sm active:scale-95 transition max-w-[165px]">
+        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+          <polygon points="12,2 15,9 22,9.5 16.5,14.2 18.2,21 12,17.3 5.8,21 7.5,14.2 2,9.5 9,9" fill="#FACC15" stroke="#854D0E" stroke-width="1.5"/>
+        </svg>
+        <span id="header-stars" class="text-[#FACC15] font-black">0</span>
+        <span class="text-slate-500">•</span>
+        <span id="header-colonists" class="text-[#A3E635] font-black">0</span>
+        <span class="text-[10px] text-slate-300">col.</span>
+      </button>
+    </header>
+
+    <!-- ÁREA PRINCIPAL -->
+    <main id="app-main" class="flex-1 overflow-y-auto pb-24"></main>
+
+    <!-- BARRA INFERIOR -->
+    <nav class="fixed bottom-0 w-full max-w-[434px] bg-[#0B1120] border-t-2 border-[#1E293B] px-1.5 py-1.5 z-40 grid grid-cols-6 gap-0.5">
+      <button type="button" onclick="switchTab('inicio')" data-tab="inicio" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl transition">
+        <span class="text-[10px] font-extrabold">Início</span>
+      </button>
+      <button type="button" onclick="switchTab('loja')" data-tab="loja" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl transition">
+        <span class="text-[10px] font-extrabold">Loja</span>
+      </button>
+      <button type="button" onclick="switchTab('missoes')" data-tab="missoes" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl transition">
+        <span class="text-[10px] font-extrabold">Missões</span>
+      </button>
+      <button type="button" onclick="switchTab('passe')" data-tab="passe" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl transition">
+        <span class="text-[10px] font-extrabold">Passe</span>
+      </button>
+      <button type="button" onclick="switchTab('bases')" data-tab="bases" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl transition">
+        <span class="text-[10px] font-extrabold">Bases</span>
+      </button>
+      <button type="button" onclick="switchTab('avisos')" data-tab="avisos" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl transition relative">
+        <span class="text-[10px] font-extrabold">Avisos</span>
+        <span id="nav-avisos-badge" class="hidden text-[9px] font-black text-amber-300">•</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- MODAL PARA DELETAR CARTEIRA AO CLICAR NELA (MODO CRIADOR) -->
+  <div id="wallet-modal" class="fixed inset-0 z-50 bg-black/75 hidden items-center justify-center p-4">
+    <div id="wallet-modal-card" class="bg-[#F8FAFC] text-[#0F172A] border-[3px] border-[#090D16] rounded-3xl w-full max-w-[360px] p-5 shadow-2xl relative">
+      <button type="button" onclick="closeWalletModal()" aria-label="Fechar" class="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-white border-2 border-[#090D16] font-black text-xs flex items-center justify-center">
+        X
+      </button>
+      <div id="wallet-modal-body"></div>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBAUoRv8uIgdIkbv3rrjyluC1Zcx9ZhPRc",
+      authDomain: "colonia-nova-orbita.firebaseapp.com",
+      databaseURL: "https://colonia-nova-orbita-default-rtdb.firebaseio.com",
+      projectId: "colonia-nova-orbita",
+      storageBucket: "colonia-nova-orbita.firebasestorage.app",
+      messagingSenderId: "801880506373",
+      appId: "1:801880506373:web:fe80e1f95032c2801f1c6c"
+    };
+
+    let rtdb = null;
+    try {
+      if (firebaseConfig.databaseURL) {
+        firebase.initializeApp(firebaseConfig);
+        rtdb = firebase.database();
+      }
+    } catch (e) {
+      rtdb = null;
+    }
+
+    const ACCOUNTS_STORAGE_KEY = 'nova_orbita_accounts_v8';
+    const GLOBAL_STORAGE_KEY = 'nova_orbita_global_v8';
+    const ACTIVE_ACCOUNT_KEY = 'nova_orbita_active_account_v8';
+    const ADMIN_ACCESS_CODE = 'Yuragafa610';
+    const ONE_HOUR_MS = 60 * 60 * 1000;
+
+    const PLANETS = ['Lua', 'Marte', 'Júpiter'];
+    const PROFESSIONS = ['Morador', 'Jornalista', 'Vendedor', 'Vendedor de Naves', 'Explorador'];
+
+    const MISSION_ROTATION = [
+      { id: 'patrulha', label: 'Fazer patrulha', reward: 50, btnColor: 'bg-[#FACC15]' },
+      { id: 'varredura', label: 'Varredura orbital', reward: 50, btnColor: 'bg-[#38BDF8]' },
+      { id: 'sinal', label: 'Calibrar antena estelar', reward: 50, btnColor: 'bg-[#A3E635]' }
+    ];
+
+    const SPECIES = [
+      { id: 'creme', name: 'Creme Lunar', skin: '#DDD6B8', ear: '#C9C09B', eye: '#3B3522' },
+      { id: 'verde', name: 'Verde Clássico', skin: '#A3E635', ear: '#65A30D', eye: '#14532D' },
+      { id: 'azul', name: 'Azul Netuno', skin: '#7DD3FC', ear: '#0284C7', eye: '#0C4A6E' },
+      { id: 'roxo', name: 'Roxo Cósmico', skin: '#D8B4FE', ear: '#9333EA', eye: '#3B0764' }
+    ];
+
+    const SUITS = [
+      { id: 'cor_branca', name: 'Cor Branca', type: 'cor', price: 0, suit: '#E2E8F0', trim: '#94A3B8', tentacles: false },
+      { id: 'cor_azul', name: 'Cor Azul', type: 'cor', price: 0, suit: '#38BDF8', trim: '#0284C7', tentacles: false },
+      { id: 'cor_verde', name: 'Cor Verde', type: 'cor', price: 0, suit: '#84CC16', trim: '#4D7C0F', tentacles: false },
+      { id: 'cor_roxa', name: 'Cor Roxa', type: 'cor', price: 0, suit: '#C084FC', trim: '#7E22CE', tentacles: false },
+      { id: 'fantasia_tentaculos', name: 'Fantasia de Alien com Tentáculos', type: 'fantasia', price: 80, suit: '#A855F7', trim: '#FACC15', tentacles: true },
+      { id: 'fantasia_comandante', name: 'Fantasia Comandante Solar', type: 'fantasia', price: 120, suit: '#F59E0B', trim: '#FEF08A', tentacles: false }
+    ];
+
+    const ACCESSORIES = [
+      { id: 'nenhum', name: 'Sem acessório', price: 0 },
+      { id: 'oculos', name: 'Óculos Espacial', price: 30 },
+      { id: 'brincos', name: 'Brincos Estelares', price: 35 },
+      { id: 'chapeu', name: 'Chapéu da Galáxia', price: 45 }
+    ];
+
+    const PETS = [
+      { id: 'nenhum', name: 'Sem animal', price: 0, fur: 'transparent', ear: 'transparent', eye: 'transparent' },
+      { id: 'mini_gato_alien', name: 'Mini gato alienígena', price: 50, fur: '#A3E635', ear: '#65A30D', eye: '#090D16' },
+      { id: 'mini_gato_nebula', name: 'Mini gato nebuloso', price: 80, fur: '#C084FC', ear: '#7E22CE', eye: '#090D16' }
+    ];
+
+    function normalizeHandle(raw) {
+      const clean = String(raw || '').trim().replace(/\s+/g, '');
+      if (!clean) return '';
+      return clean.startsWith('@') ? clean : `@${clean}`;
+    }
+
+    function dbSafeKey(handle) {
+      return normalizeHandle(handle).toLowerCase().replace(/[.#$\[\]\/]/g, '_');
+    }
+
+    function createDefaultAccountState(handle, pin) {
+      return {
+        handle,
+        pin: String(pin).trim(),
+        activeTab: 'inicio',
+        stars: 0,
+        notifications: [],
+        look: { species: 'creme', suit: 'cor_branca', accessory: 'nenhum', pet: 'nenhum' },
+        ownedSuits: ['cor_branca', 'cor_azul', 'cor_verde', 'cor_roxa'],
+        ownedAccessories: ['nenhum'],
+        ownedPets: ['nenhum'],
+        profile: {
+          base: 'Base Alfa-01',
+          planet: 'Lua',
+          profession: 'Morador'
+        },
+        missionSlot: 0,
+        missionCooldownUntil: 0
+      };
+    }
+
+    function ensureAccountFields(acc) {
+      if (!acc.look) acc.look = { species: 'creme', suit: 'cor_branca', accessory: 'nenhum', pet: 'nenhum' };
+      if (!acc.look.suit) acc.look.suit = 'cor_branca';
+      if (!acc.look.accessory) acc.look.accessory = 'nenhum';
+      if (!acc.look.pet) acc.look.pet = 'nenhum';
+      if (!Array.isArray(acc.ownedSuits)) acc.ownedSuits = ['cor_branca', 'cor_azul', 'cor_verde', 'cor_roxa'];
+      if (!Array.isArray(acc.ownedAccessories)) acc.ownedAccessories = ['nenhum'];
+      if (!Array.isArray(acc.ownedPets)) acc.ownedPets = ['nenhum'];
+      if (!Array.isArray(acc.notifications)) acc.notifications = [];
+      if (!acc.profile) acc.profile = { base: 'Base Alfa-01', planet: 'Lua', profession: 'Morador' };
+      if (!acc.profile.base) acc.profile.base = 'Base Alfa-01';
+      if (!PLANETS.includes(acc.profile.planet)) acc.profile.planet = 'Lua';
+      if (!PROFESSIONS.includes(acc.profile.profession)) acc.profile.profession = 'Morador';
+      return acc;
+    }
+
+    let globalState = {
+      day: 1,
+      activeColonists: [],
+      pendingFollowers: []
+    };
+
+    function loadLocalAccounts() {
+      try {
+        const raw = localStorage.getItem(ACCOUNTS_STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        if (!parsed['@gf_nhoto']) {
+          parsed['@gf_nhoto'] = createDefaultAccountState('@gf_nhoto', '2013');
+        }
+        return parsed;
+      } catch (e) {
+        return { '@gf_nhoto': createDefaultAccountState('@gf_nhoto', '2013') };
+      }
+    }
+
+    function loadLocalGlobal() {
+      try {
+        const raw = localStorage.getItem(GLOBAL_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          return {
+            day: parsed.day || 1,
+            activeColonists: Array.isArray(parsed.activeColonists) ? parsed.activeColonists : [],
+            pendingFollowers: Array.isArray(parsed.pendingFollowers) ? parsed.pendingFollowers : []
+          };
+        }
+      } catch (e) {}
+      return { day: 1, activeColonists: [], pendingFollowers: [] };
+    }
+
+    let accounts = loadLocalAccounts();
+    globalState = loadLocalGlobal();
+    let activeKey = localStorage.getItem(ACTIVE_ACCOUNT_KEY) || null;
+    let state = activeKey && accounts[activeKey] ? ensureAccountFields(accounts[activeKey]) : null;
+    let adminUnlocked = false;
+
+    if (rtdb) {
+      rtdb.ref('colony_global').on('value', (snap) => {
+        const val = snap.val();
+        if (val) {
+          globalState.day = val.day || 1;
+          globalState.activeColonists = Array.isArray(val.activeColonists) ? val.activeColonists : [];
+          globalState.pendingFollowers = Array.isArray(val.pendingFollowers) ? val.pendingFollowers : [];
+          localStorage.setItem(GLOBAL_STORAGE_KEY, JSON.stringify(globalState));
+          if (state) renderApp();
+        }
+      });
+
+      rtdb.ref('colony_accounts').on('value', (snap) => {
+        const val = snap.val();
+        if (val) {
+          Object.keys(val).forEach(k => {
+            const acc = ensureAccountFields(val[k]);
+            accounts[acc.handle.toLowerCase()] = acc;
+          });
+          localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
+          if (activeKey && accounts[activeKey]) {
+            const currentTab = state ? state.activeTab : 'inicio';
+            state = ensureAccountFields(accounts[activeKey]);
+            state.activeTab = currentTab;
+            renderApp();
+          }
+        }
+      });
+    }
+
+    function saveGlobalState() {
+      localStorage.setItem(GLOBAL_STORAGE_KEY, JSON.stringify(globalState));
+      if (rtdb) {
+        rtdb.ref('colony_global').set(globalState);
+      }
+    }
+
+    function saveAccountToCloud(accObj) {
+      const k = accObj.handle.toLowerCase();
+      accounts[k] = ensureAccountFields(accObj);
+      localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
+      if (rtdb) {
+        rtdb.ref('colony_accounts/' + dbSafeKey(accObj.handle)).set(accounts[k]);
+      }
+    }
+
+    function persistCurrentState() {
+      if (!state || !activeKey) return;
+      saveAccountToCloud(state);
+      updateHeaderAndNav();
+    }
+
+    function registerColonistGlobally(accObj) {
+      const lower = accObj.handle.toLowerCase();
+      const alreadyActive = globalState.activeColonists.some(
+        c => normalizeHandle(c.handle).toLowerCase() === lower
+      );
+      if (!alreadyActive) {
+        const num = globalState.activeColonists.length + 1;
+        globalState.activeColonists.push({
+          id: `col_${Date.now()}_${num}`,
+          handle: accObj.handle,
+          arrivedOnDay: globalState.day,
+          species: accObj.look.species || 'creme',
+          suit: accObj.look.suit || 'cor_branca',
+          dome: `B-${String(num).padStart(2, '0')}`
+        });
+        saveGlobalState();
+      }
+    }
+
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function showToast(msg, bgClass = 'bg-[#0F172A] text-[#A3E635] border-[#A3E635]') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+      const el = document.createElement('div');
+      el.className = `px-3.5 py-2.5 rounded-2xl border-2 text-xs font-extrabold shadow-xl ${bgClass}`;
+      el.textContent = msg;
+      container.appendChild(el);
+      setTimeout(() => el.remove(), 2600);
+    }
+
+    function setLoginError(message) {
+      const errBox = document.getElementById('login-error');
+      if (!errBox) return;
+      errBox.textContent = message;
+      errBox.classList.remove('hidden');
+    }
+
+    function clearLoginError() {
+      const errBox = document.getElementById('login-error');
+      if (!errBox) return;
+      errBox.textContent = '';
+      errBox.classList.add('hidden');
+    }
+
+    function renderCharacterWithPetSVG(speciesId, suitId, accessoryId = 'nenhum', petId = 'nenhum', sizeClass = 'h-28') {
+      const sp = SPECIES.find(s => s.id === speciesId) || SPECIES[0];
+      const st = SUITS.find(u => u.id === suitId) || SUITS[0];
+      const pet = PETS.find(p => p.id === petId) || PETS[0];
+      const hasPet = pet.id !== 'nenhum';
+
+      return `
+        <div class="flex items-end justify-center gap-2 ${sizeClass} mx-auto">
+          <svg viewBox="0 0 120 135" class="h-full w-auto">
+            <rect x="24" y="34" width="9" height="16" rx="4.5" fill="${sp.ear}"/>
+            <rect x="87" y="34" width="9" height="16" rx="4.5" fill="${sp.ear}"/>
+
+            ${accessoryId === 'chapeu' ? `
+              <ellipse cx="60" cy="18" rx="24" ry="5" fill="#FACC15" stroke="#090D16" stroke-width="2"/>
+              <path d="M44 17 Q60 4 76 17 Z" fill="#38BDF8" stroke="#090D16" stroke-width="2"/>
+            ` : ''}
+
+            <ellipse cx="60" cy="41" rx="28" ry="23" fill="${sp.skin}"/>
+            <ellipse cx="50" cy="40" rx="4.5" ry="7" fill="${sp.eye}"/>
+            <ellipse cx="70" cy="40" rx="4.5" ry="7" fill="${sp.eye}"/>
+
+            ${accessoryId === 'oculos' ? `
+              <rect x="41" y="34" width="16" height="11" rx="3" fill="#0F172A" stroke="#38BDF8" stroke-width="2"/>
+              <rect x="63" y="34" width="16" height="11" rx="3" fill="#0F172A" stroke="#38BDF8" stroke-width="2"/>
+              <line x1="57" y1="39" x2="63" y2="39" stroke="#38BDF8" stroke-width="2"/>
+            ` : ''}
+
+            ${accessoryId === 'brincos' ? `
+              <circle cx="28" cy="52" r="4" fill="#FACC15" stroke="#090D16" stroke-width="1.5"/>
+              <circle cx="92" cy="52" r="4" fill="#FACC15" stroke="#090D16" stroke-width="1.5"/>
+            ` : ''}
+
+            ${st.tentacles ? `
+              <path d="M38 82 Q22 92 26 108" fill="none" stroke="${st.trim}" stroke-width="5" stroke-linecap="round"/>
+              <path d="M82 82 Q98 92 94 108" fill="none" stroke="${st.trim}" stroke-width="5" stroke-linecap="round"/>
+              <path d="M46 98 Q38 116 44 126" fill="none" stroke="${st.trim}" stroke-width="4.5" stroke-linecap="round"/>
+              <path d="M74 98 Q82 116 76 126" fill="none" stroke="${st.trim}" stroke-width="4.5" stroke-linecap="round"/>
+            ` : ''}
+
+            <rect x="23" y="69" width="12" height="24" rx="6" fill="${st.suit}"/>
+            <rect x="85" y="69" width="12" height="24" rx="6" fill="${st.suit}"/>
+            <rect x="38" y="66" width="44" height="32" rx="4" fill="${st.suit}"/>
+            <rect x="53" y="75" width="14" height="14" rx="2" fill="none" stroke="${st.trim}" stroke-width="2.5"/>
+            <rect x="43" y="99" width="12" height="21" rx="3" fill="${st.suit}"/>
+            <rect x="65" y="99" width="12" height="21" rx="3" fill="${st.suit}"/>
+          </svg>
+          ${hasPet ? `
+            <svg viewBox="0 0 64 64" class="h-14 w-14 shrink-0 mb-1 animate-float">
+              <path d="M16 24 L22 10 L30 22 Z" fill="${pet.ear}" stroke="#090D16" stroke-width="2.5"/>
+              <path d="M48 24 L42 10 L34 22 Z" fill="${pet.ear}" stroke="#090D16" stroke-width="2.5"/>
+              <ellipse cx="32" cy="27" rx="16" ry="13" fill="${pet.fur}" stroke="#090D16" stroke-width="2.5"/>
+              <circle cx="26" cy="26" r="3" fill="${pet.eye}"/>
+              <circle cx="38" cy="26" r="3" fill="${pet.eye}"/>
+              <path d="M29 32 Q32 35 35 32" fill="none" stroke="#090D16" stroke-width="2" stroke-linecap="round"/>
+              <ellipse cx="32" cy="46" rx="11" ry="10" fill="${pet.fur}" stroke="#090D16" stroke-width="2.5"/>
+              <path d="M43 48 Q56 44 54 34" fill="none" stroke="${pet.ear}" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    async function handleLoginClick() {
+      const handleInput = document.getElementById('login-tiktok');
+      const pinInput = document.getElementById('login-pin');
+
+      const handle = normalizeHandle(handleInput ? handleInput.value : '');
+      const pin = String(pinInput ? pinInput.value : '').replace(/\D/g, '').slice(0, 4);
+
+      if (!handle || handle === '@') {
+        setLoginError('Coloque seu @ do TikTok para entrar.');
+        return;
+      }
+      if (!/^\d{1,4}$/.test(pin)) {
+        setLoginError('Digite um PIN numérico de 1 a 4 dígitos.');
+        return;
+      }
+
+      const key = handle.toLowerCase();
+
+      if (rtdb) {
+        try {
+          const snap = await rtdb.ref('colony_accounts/' + dbSafeKey(handle)).get();
+          if (snap.exists()) {
+            accounts[key] = ensureAccountFields(snap.val());
+          }
+        } catch (e) {}
+      }
+
+      if (accounts[key]) {
+        if (String(accounts[key].pin) !== pin) {
+          setLoginError(`PIN incorreto para ${handle}. Só quem sabe o PIN único dessa conta pode entrar.`);
+          return;
+        }
+        state = ensureAccountFields(accounts[key]);
+      } else {
+        state = createDefaultAccountState(handle, pin);
+        saveAccountToCloud(state);
+      }
+
+      registerColonistGlobally(state);
+      activeKey = key;
+      localStorage.setItem(ACTIVE_ACCOUNT_KEY, activeKey);
+      clearLoginError();
+      document.getElementById('login-screen').classList.add('hidden');
+      renderApp();
+      showToast(`Conta ${state.handle} acessada!`);
+    }
+
+    function openAccountSwitcher() {
+      document.getElementById('login-tiktok').value = state ? state.handle : '';
+      document.getElementById('login-pin').value = '';
+      clearLoginError();
+      document.getElementById('login-screen').classList.remove('hidden');
+    }
+
+    function deleteMyOwnAccountData() {
+      if (!state || !activeKey) return;
+      const myHandle = state.handle;
+      const myPin = state.pin;
+
+      delete accounts[activeKey];
+      localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
+      if (rtdb) {
+        rtdb.ref('colony_accounts/' + dbSafeKey(myHandle)).remove();
+      }
+
+      globalState.activeColonists = globalState.activeColonists.filter(
+        c => normalizeHandle(c.handle).toLowerCase() !== activeKey
+      );
+      saveGlobalState();
+
+      localStorage.removeItem(ACTIVE_ACCOUNT_KEY);
+      activeKey = null;
+      state = null;
+      adminUnlocked = false;
+
+      document.getElementById('login-tiktok').value = myHandle;
+      document.getElementById('login-pin').value = myPin;
+      clearLoginError();
+      document.getElementById('login-screen').classList.remove('hidden');
+      showToast(`Seus dados de ${myHandle} foram deletados.`);
+    }
+
+    function updateProfileBaseFromButton() {
+      if (!state) return;
+      const input = document.getElementById('profile-base-input');
+      const val = String(input ? input.value : '').trim();
+      if (!val) {
+        showToast('Digite um nome para a base.', 'bg-rose-950 text-rose-200 border-rose-400');
+        return;
+      }
+      state.profile.base = val;
+      persistCurrentState();
+      renderApp();
+      showToast(`Base atualizada para "${val}"!`);
+    }
+
+    function selectProfilePlanet(planet) {
+      if (!state || !PLANETS.includes(planet)) return;
+      state.profile.planet = planet;
+      persistCurrentState();
+      renderApp();
+      showToast(`Planeta alterado para ${planet}!`);
+    }
+
+    function selectProfileProfession(profession) {
+      if (!state || !PROFESSIONS.includes(profession)) return;
+      state.profile.profession = profession;
+      persistCurrentState();
+      renderApp();
+      showToast(`Profissão: ${profession}!`);
+    }
+
+    function syncMissionTimer(now = Date.now()) {
+      if (!state) return;
+      if (state.missionCooldownUntil && now >= state.missionCooldownUntil) {
+        state.missionCooldownUntil = 0;
+        state.missionSlot = (state.missionSlot + 1) % MISSION_ROTATION.length;
+        persistCurrentState();
+      }
+    }
+
+    function formatRemainingMs(ms) {
+      const totalSec = Math.max(0, Math.ceil(ms / 1000));
+      const mins = Math.floor(totalSec / 60);
+      const secs = totalSec % 60;
+      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    function claimTimedMission() {
+      if (!state) return;
+      const now = Date.now();
+      syncMissionTimer(now);
+
+      if (state.missionCooldownUntil && now < state.missionCooldownUntil) {
+        showToast('Essa missão já foi concluída. Aguarde 1 hora!');
+        return;
+      }
+
+      const currentMission = MISSION_ROTATION[state.missionSlot % MISSION_ROTATION.length];
+      state.stars += currentMission.reward;
+      state.missionCooldownUntil = now + ONE_HOUR_MS;
+      persistCurrentState();
+      renderApp();
+      showToast(`+${currentMission.reward} estrelas! A missão muda em 1 hora.`);
+    }
+
+    function advanceOneHourByAdmin() {
+      if (!state || !adminUnlocked) return;
+      state.missionCooldownUntil = 0;
+      state.missionSlot = (state.missionSlot + 1) % MISSION_ROTATION.length;
+      persistCurrentState();
+      renderApp();
+      showToast('1 hora avançada pelo criador!');
+    }
+
+    function unlockAdminPanel() {
+      const codeInput = document.getElementById('admin-code-input');
+      const typed = (codeInput ? codeInput.value : '').trim();
+      if (typed !== ADMIN_ACCESS_CODE) {
+        showToast('Código incorreto para área restrita.', 'bg-rose-950 text-rose-200 border-rose-400');
+        return;
+      }
+      adminUnlocked = true;
+      renderApp();
+      showToast('Área do criador liberada!');
+    }
+
+    function lockAdminPanel() {
+      adminUnlocked = false;
+      renderApp();
+      showToast('Área do criador bloqueada.');
+    }
+
+    async function sendWarningToHandle() {
+      if (!state || !adminUnlocked) return;
+      const handleInput = document.getElementById('warning-handle-input');
+      const msgInput = document.getElementById('warning-message-input');
+
+      const targetHandle = normalizeHandle(handleInput ? handleInput.value : '');
+      const message = String(msgInput ? msgInput.value : '').trim();
+
+      if (!targetHandle || targetHandle === '@') {
+        showToast('Digite o @ da pessoa para mandar o aviso.', 'bg-rose-950 text-rose-200 border-rose-400');
+        return;
+      }
+      if (!message) {
+        showToast('Escreva a mensagem do aviso.', 'bg-rose-950 text-rose-200 border-rose-400');
+        return;
+      }
+
+      const targetLower = targetHandle.toLowerCase();
+      const warningObj = {
+        id: `warn_${Date.now()}`,
+        from: state.handle,
+        message,
+        day: globalState.day
+      };
+
+      if (rtdb) {
+        try {
+          const snap = await rtdb.ref('colony_accounts/' + dbSafeKey(targetHandle)).get();
+          if (snap.exists()) {
+            accounts[targetLower] = ensureAccountFields(snap.val());
+          }
+        } catch (e) {}
+      }
+
+      let targetAcc = accounts[targetLower]
+        ? ensureAccountFields(accounts[targetLower])
+        : createDefaultAccountState(targetHandle, '0000');
+
+      targetAcc.notifications.unshift(warningObj);
+      saveAccountToCloud(targetAcc);
+
+      if (targetLower === activeKey) {
+        state = targetAcc;
+      }
+
+      if (handleInput) handleInput.value = '';
+      if (msgInput) msgInput.value = '';
+      renderApp();
+      showToast(`Aviso enviado para ${targetHandle}!`);
+    }
+
+    function deletePersonByHandle(rawHandle) {
+      if (!state || !adminUnlocked) return;
+      const targetHandle = normalizeHandle(rawHandle);
+      if (!targetHandle || targetHandle === '@') {
+        showToast('Digite o @ da pessoa para deletar.', 'bg-rose-950 text-rose-200 border-rose-400');
+        return;
+      }
+
+      const targetLower = targetHandle.toLowerCase();
+      globalState.activeColonists = globalState.activeColonists.filter(
+        col => normalizeHandle(col.handle).toLowerCase() !== targetLower
+      );
+      globalState.pendingFollowers = globalState.pendingFollowers.filter(
+        col => normalizeHandle(col.handle).toLowerCase() !== targetLower
+      );
+      saveGlobalState();
+
+      if (accounts[targetLower] && targetLower !== activeKey) {
+        delete accounts[targetLower];
+        localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
+      }
+      if (rtdb && targetLower !== activeKey) {
+        rtdb.ref('colony_accounts/' + dbSafeKey(targetHandle)).remove();
+      }
+
+      renderApp();
+      showToast(`${targetHandle} deletado com sucesso!`);
+    }
+
+    function deleteFollowerByAdminInput() {
+      const input = document.getElementById('delete-handle-input');
+      const val = input ? input.value : '';
+      deletePersonByHandle(val);
+      if (input) input.value = '';
+    }
+
+    function openWalletModal(index) {
+      if (!state) return;
+      const col = globalState.activeColonists[index];
+      if (!col) return;
+
+      const modal = document.getElementById('wallet-modal');
+      const body = document.getElementById('wallet-modal-body');
+
+      body.innerHTML = `
+        <h3 class="font-display text-lg font-bold pr-6">Carteira de ${esc(col.handle)}</h3>
+        <p class="text-xs font-bold text-slate-600 mt-1">
+          Cúpula ${esc(col.dome)} • Entrou no Dia ${col.arrivedOnDay}
+        </p>
+        <div class="my-3">
+          ${renderCharacterWithPetSVG(col.species, col.suit, 'nenhum', 'nenhum', 'h-24')}
+        </div>
+        ${adminUnlocked
+          ? `<button type="button" onclick="confirmDeleteFromModal('${esc(col.handle)}')" class="btn-cosmic w-full py-2.5 rounded-2xl bg-rose-600 text-white text-xs font-black">
+               Deletar conta / carteira de ${esc(col.handle)}
+             </button>`
+          : `<p class="text-xs font-bold text-amber-800 bg-amber-100 border border-amber-400 rounded-xl p-2.5">
+               Apenas o criador (com o código em Missões) pode deletar esta carteira.
+             </p>`
+        }
+      `;
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeWalletModal() {
+      const modal = document.getElementById('wallet-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function confirmDeleteFromModal(handle) {
+      closeWalletModal();
+      deletePersonByHandle(handle);
+    }
+
+    function addFollowerByAdmin() {
+      if (!state || !adminUnlocked) return;
+      const input = document.getElementById('follower-handle-input');
+      const handle = normalizeHandle(input ? input.value : '');
+      if (!handle || handle === '@') {
+        showToast('Digite o @ do seguidor.', 'bg-rose-950 text-rose-200 border-rose-400');
+        return;
+      }
+
+      const indexNum = globalState.activeColonists.length + globalState.pendingFollowers.length + 1;
+      globalState.pendingFollowers.push({
+        id: `col_${Date.now()}_${indexNum}`,
+        handle,
+        registeredOnDay: globalState.day,
+        species: SPECIES[indexNum % SPECIES.length].id,
+        suit: 'cor_branca',
+        dome: `B-${String(indexNum).padStart(2, '0')}`
+      });
+
+      saveGlobalState();
+      if (input) input.value = '';
+      renderApp();
+      showToast(`${handle} registrado! Carteira aparece amanhã.`);
+    }
+
+    function advanceToNextDay() {
+      if (!state || !adminUnlocked) return;
+      globalState.day += 1;
+
+      const newlyArrived = globalState.pendingFollowers.splice(0, globalState.pendingFollowers.length);
+      newlyArrived.forEach(col => {
+        globalState.activeColonists.push({
+          ...col,
+          arrivedOnDay: globalState.day,
+          walletActive: true
+        });
+      });
+
+      saveGlobalState();
+      renderApp();
+      showToast(`Avançou para o Dia ${globalState.day}!`);
+    }
+
+    function switchTab(tab) {
+      if (!state) return;
+      state.activeTab = tab;
+      persistCurrentState();
+      renderApp();
+    }
+
+    function updateHeaderAndNav() {
+      if (!state) return;
+      document.getElementById('header-day').textContent = globalState.day;
+      document.getElementById('header-stars').textContent = state.stars;
+      document.getElementById('header-colonists').textContent = globalState.activeColonists.length;
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === state.activeTab);
+      });
+
+      const badge = document.getElementById('nav-avisos-badge');
+      if (badge) {
+        if (state.notifications && state.notifications.length > 0) {
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
+    }
+
+    function renderInicio() {
+      const onlineStatus = rtdb
+        ? `<span class="text-emerald-400">Online (sincronizado)</span>`
+        : `<span class="text-amber-300">Modo local</span>`;
+
+      return `
+        <div class="p-4 space-y-4 tab-content">
+          <div class="rounded-3xl bg-gradient-to-b from-[#1E1B4B] via-[#0F172A] to-[#14532D] border-2 border-[#334155] p-4 text-center">
+            <div class="text-xs font-black uppercase tracking-wider text-[#A3E635] mb-1">
+              ${esc(state.handle)} • ${esc(state.profile.planet)} • ${esc(state.profile.profession)}
+            </div>
+            ${renderCharacterWithPetSVG(state.look.species, state.look.suit, state.look.accessory, state.look.pet, 'h-28 animate-float')}
+            <h1 class="colony-logo-text font-display text-2xl font-bold mt-2">
+              Colônia Nova Órbita
+            </h1>
+            <p class="text-xs text-slate-200 font-bold mt-1">
+              Base: <span class="text-white">${esc(state.profile.base)}</span> • Estrelas: <span class="text-[#FACC15]">${state.stars}</span>
+            </p>
+            <div class="mt-2 text-[11px] font-extrabold">${onlineStatus}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLoja() {
+      return `
+        <div class="p-4 space-y-4 tab-content">
+          <div class="orbit-card p-4 text-center space-y-3">
+            <h2 class="font-display text-lg font-bold">Hangar, Acessórios & Animais</h2>
+            ${renderCharacterWithPetSVG(state.look.species, state.look.suit, state.look.accessory, state.look.pet, 'h-28')}
+            <div class="flex flex-wrap justify-center gap-1.5">
+              ${SPECIES.map(sp => `
+                <button type="button" onclick="selectSpecies('${sp.id}')" class="btn-cosmic-sm px-2.5 py-1 rounded-xl text-xs ${state.look.species === sp.id ? 'bg-[#84CC16] text-[#090D16]' : 'bg-white text-slate-800'}">
+                  ${sp.name}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="orbit-card p-4 space-y-2.5">
+            <h3 class="font-display text-base font-bold">Acessórios (Óculos, Brincos, Chapéu)</h3>
+            <div class="grid grid-cols-1 gap-2">
+              ${ACCESSORIES.map(acc => {
+                const owned = state.ownedAccessories.includes(acc.id);
+                const equipped = state.look.accessory === acc.id;
+                return `
+                  <div class="p-2.5 rounded-2xl bg-slate-100 border-2 border-[#090D16] flex items-center justify-between gap-2">
+                    <div>
+                      <div class="font-display font-bold text-xs">${acc.name}</div>
+                      <div class="text-[11px] font-extrabold text-slate-600">
+                        ${acc.price === 0 ? 'Grátis' : `${acc.price} estrelas`}
+                      </div>
+                    </div>
+                    ${equipped
+                      ? `<button type="button" disabled class="px-3 py-1 rounded-xl bg-emerald-600 text-white text-xs font-black">Usando</button>`
+                      : owned
+                        ? `<button type="button" onclick="equipAccessory('${acc.id}')" class="btn-cosmic-sm px-3 py-1 rounded-xl bg-[#38BDF8] text-[#090D16] text-xs font-black">Usar</button>`
+                        : `<button type="button" onclick="buyAccessory('${acc.id}')" class="btn-cosmic-sm px-3 py-1 rounded-xl bg-[#FACC15] text-[#090D16] text-xs font-black">Comprar (${acc.price})</button>`
+                    }
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <div class="orbit-card p-4 space-y-2.5">
+            <h3 class="font-display text-base font-bold">Roupas e Fantasias</h3>
+            <div class="grid grid-cols-2 gap-2.5">
+              ${SUITS.map(suit => {
+                const owned = state.ownedSuits.includes(suit.id);
+                const equipped = state.look.suit === suit.id;
+                return `
+                  <div class="p-3 rounded-2xl bg-slate-100 border-2 border-[#090D16] flex flex-col justify-between">
+                    <div>
+                      <div class="text-[10px] font-black uppercase ${suit.type === 'fantasia' ? 'text-purple-700' : 'text-emerald-700'}">
+                        ${suit.type === 'fantasia' ? 'Fantasia (Paga)' : 'Cor (Grátis)'}
+                      </div>
+                      <div class="font-display font-bold text-xs mt-0.5">${suit.name}</div>
+                      <div class="text-[11px] font-extrabold text-slate-600 mt-0.5">
+                        ${suit.price === 0 ? 'Grátis' : `${suit.price} estrelas`}
+                      </div>
+                    </div>
+                    <div class="mt-2.5">
+                      ${equipped
+                        ? `<button type="button" disabled class="w-full py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-black">Equipado</button>`
+                        : owned
+                          ? `<button type="button" onclick="equipSuit('${suit.id}')" class="btn-cosmic-sm w-full py-1.5 rounded-xl bg-[#38BDF8] text-[#090D16] text-xs font-black">Equipar</button>`
+                          : `<button type="button" onclick="buySuit('${suit.id}')" class="btn-cosmic-sm w-full py-1.5 rounded-xl bg-[#FACC15] text-[#090D16] text-xs font-black">Comprar</button>`
+                      }
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <div class="orbit-card p-4 space-y-2.5">
+            <h3 class="font-display text-base font-bold">Animais da Colônia</h3>
+            <div class="grid grid-cols-1 gap-2.5">
+              ${PETS.map(pet => {
+                const owned = state.ownedPets.includes(pet.id);
+                const equipped = state.look.pet === pet.id;
+                return `
+                  <div class="p-3 rounded-2xl bg-slate-100 border-2 border-[#090D16] flex items-center justify-between gap-2">
+                    <div>
+                      <div class="font-display font-bold text-sm">${pet.name}</div>
+                      <div class="text-xs font-extrabold text-slate-600">
+                        ${pet.price === 0 ? 'Grátis' : `${pet.price} estrelas`}
+                      </div>
+                    </div>
+                    ${equipped
+                      ? `<button type="button" disabled class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-black">Ao lado</button>`
+                      : owned
+                        ? `<button type="button" onclick="equipPet('${pet.id}')" class="btn-cosmic-sm px-3 py-1.5 rounded-xl bg-[#38BDF8] text-[#090D16] text-xs font-black">Colocar ao lado</button>`
+                        : `<button type="button" onclick="buyPet('${pet.id}')" class="btn-cosmic-sm px-3 py-1.5 rounded-xl bg-[#FACC15] text-[#090D16] text-xs font-black">Comprar (${pet.price})</button>`
+                    }
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function selectSpecies(id) {
+      state.look.species = id;
+      persistCurrentState();
+      renderApp();
+    }
+
+    function equipAccessory(id) {
+      if (!state.ownedAccessories.includes(id)) return;
+      state.look.accessory = id;
+      persistCurrentState();
+      renderApp();
+      showToast('Acessório equipado!');
+    }
+
+    function buyAccessory(id) {
+      const acc = ACCESSORIES.find(a => a.id === id);
+      if (!acc || state.ownedAccessories.includes(id)) return;
+      if (state.stars < acc.price) {
+        showToast('Estrelas insuficientes!', 'bg-rose-950 text-rose-200 border-rose-400');
+        return;
+      }
+      state.stars -= acc.price;
+      state.ownedAccessories.push(id);
+      state.look.accessory = id;
+      persistCurrentState();
+      renderApp();
+      showToast(`${acc.name} comprado!`);
+    }
+
+    function equipSuit(id) {
+      if (!state.ownedSuits.includes(id)) return;
+      state.look.suit = id;
+      persistCurrentState();
+      renderApp();
+      showToast('Traje equipado!');
+    }
+
+    function buySuit(id) {
+      const suit = SUITS.find(s => s.id === id);
+      if (!suit || state.ownedSuits.includes(id)) return;
+      if (state.stars < suit.price) {
+        showToast('Estrelas insuficientes!', 'bg-rose-950 text-rose-200 border-rose-400');
+        return;
+      }
+      state.stars -= suit.price;
+      state.ownedSuits.push(id);
+      state.look.suit = id;
+      persistCurrentState();
+      renderApp();
+      showToast(`${suit.name} comprado!`);
+    }
+
+    function equipPet(id) {
+      if (!state.ownedPets.includes(id)) return;
+      state.look.pet = id;
+      persistCurrentState();
+      renderApp();
+      showToast('Animal colocado ao lado do personagem!');
+    }
+
+    function buyPet(id) {
+      const pet = PETS.find(p => p.id === id);
+      if (!pet || state.ownedPets.includes(id)) return;
+      if (state.stars < pet.price) {
+        showToast('Estrelas insuficientes!', 'bg-rose-950 text-rose-200 border-rose-400');
+        return;
+      }
+      state.stars -= pet.price;
+      state.ownedPets.push(id);
+      state.look.pet = id;
+      persistCurrentState();
+      renderApp();
+      showToast(`${pet.name} comprado e colocado ao lado!`);
+    }
+
+    function renderMissoes() {
+      const now = Date.now();
+      syncMissionTimer(now);
+
+      const mission = MISSION_ROTATION[state.missionSlot % MISSION_ROTATION.length];
+      const onCooldown = Boolean(state.missionCooldownUntil && now < state.missionCooldownUntil);
+      const remainingText = onCooldown ? formatRemainingMs(state.missionCooldownUntil - now) : '';
+
+      return `
+        <div class="p-4 space-y-4 tab-content">
+          <div class="orbit-card p-4 space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <h2 class="font-display text-lg font-bold">Missão da Hora</h2>
+              <span class="px-2.5 py-1 rounded-full bg-[#0F172A] text-[#FACC15] text-xs font-black">
+                +${mission.reward} estrelas
+              </span>
+            </div>
+
+            <p class="text-xs font-bold text-slate-700">
+              Você só pode clicar uma vez. Depois de 1 hora, a missão muda automaticamente.
+            </p>
+
+            ${onCooldown
+              ? `<button type="button" disabled class="w-full py-2.5 rounded-2xl bg-slate-300 text-slate-700 border-2 border-slate-400 text-xs font-black">
+                   Concluída • Muda em ${remainingText}
+                 </button>`
+              : `<button type="button" onclick="claimTimedMission()" class="btn-cosmic w-full py-2.5 rounded-2xl ${mission.btnColor} text-[#090D16] text-xs font-black">
+                   ${mission.label} (+${mission.reward} estrelas)
+                 </button>`
+            }
+          </div>
+
+          <div class="orbit-card p-4 space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <h2 class="font-display text-lg font-bold">Área Restrita do Criador</h2>
+              ${adminUnlocked
+                ? `<button type="button" onclick="lockAdminPanel()" class="btn-cosmic-sm px-2.5 py-1 rounded-xl bg-slate-800 text-white text-[11px] font-black">Bloquear</button>`
+                : `<span class="px-2.5 py-1 rounded-full bg-amber-200 text-amber-950 text-[11px] font-black">Bloqueada</span>`
+              }
+            </div>
+
+            ${!adminUnlocked
+              ? `<div class="space-y-2.5">
+                   <p class="text-xs font-bold text-slate-700">
+                     Somente o criador com o código de acesso pode registrar seguidores, avançar dia/1 hora, mandar aviso e deletar contas.
+                   </p>
+                   <div class="flex gap-2">
+                     <input
+                       id="admin-code-input"
+                       type="password"
+                       placeholder="Código de acesso"
+                       onkeydown="if (event.key === 'Enter') { event.preventDefault(); unlockAdminPanel(); }"
+                       class="flex-1 px-3 py-2 rounded-xl border-2 border-[#090D16] text-xs font-bold bg-white"
+                     />
+                     <button type="button" onclick="unlockAdminPanel()" class="btn-cosmic-sm px-3.5 py-2 rounded-xl bg-[#84CC16] text-[#090D16] text-xs font-black shrink-0">
+                       Liberar
+                     </button>
+                   </div>
+                 </div>`
+              : `<div class="space-y-3">
+                   <button type="button" onclick="advanceOneHourByAdmin()" class="btn-cosmic-sm w-full py-2 rounded-xl bg-[#38BDF8] text-[#090D16] text-xs font-black">
+                     Avançar 1 Hora (Mudar Missão)
+                   </button>
+
+                   <div class="pt-2 border-t border-slate-300 space-y-2">
+                     <label for="follower-handle-input" class="block text-xs font-black text-slate-900">
+                       Registrar seguidor (@):
+                     </label>
+                     <div class="flex gap-2">
+                       <input
+                         id="follower-handle-input"
+                         type="text"
+                         placeholder="@do_seguidor"
+                         onkeydown="if (event.key === 'Enter') { event.preventDefault(); addFollowerByAdmin(); }"
+                         class="flex-1 px-3 py-2 rounded-xl border-2 border-[#090D16] text-xs font-bold bg-white"
+                       />
+                       <button type="button" onclick="addFollowerByAdmin()" class="btn-cosmic-sm px-3 py-2 rounded-xl bg-[#A855F7] text-white text-xs font-black shrink-0">
+                         Adicionar
+                       </button>
+                     </div>
+                   </div>
+
+                   <div class="pt-2 border-t border-slate-300 space-y-2">
+                     <label for="warning-handle-input" class="block text-xs font-black text-slate-900">
+                       Mandar um aviso (nome da base errado):
+                     </label>
+                     <input
+                       id="warning-handle-input"
+                       type="text"
+                       placeholder="@da_pessoa"
+                       class="w-full px-3 py-2 rounded-xl border-2 border-[#090D16] text-xs font-bold bg-white"
+                     />
+                     <textarea
+                       id="warning-message-input"
+                       rows="2"
+                       placeholder="Escreva o aviso sobre o nome da base..."
+                       class="w-full px-3 py-2 rounded-xl border-2 border-[#090D16] text-xs font-bold bg-white"
+                     ></textarea>
+                     <button type="button" onclick="sendWarningToHandle()" class="btn-cosmic-sm w-full py-2 rounded-xl bg-amber-400 text-[#090D16] text-xs font-black">
+                       Mandar um aviso
+                     </button>
+                   </div>
+
+                   <div class="pt-2 border-t border-slate-300 space-y-2">
+                     <label for="delete-handle-input" class="block text-xs font-black text-slate-900">
+                       Deletar conta/carteira por @:
+                     </label>
+                     <div class="flex gap-2">
+                       <input
+                         id="delete-handle-input"
+                         type="text"
+                         placeholder="@da_pessoa"
+                         onkeydown="if (event.key === 'Enter') { event.preventDefault(); deleteFollowerByAdminInput(); }"
+                         class="flex-1 px-3 py-2 rounded-xl border-2 border-[#090D16] text-xs font-bold bg-white"
+                       />
+                       <button type="button" onclick="deleteFollowerByAdminInput()" class="btn-cosmic-sm px-3 py-2 rounded-xl bg-rose-600 text-white text-xs font-black shrink-0">
+                         Deletar
+                       </button>
+                     </div>
+                   </div>
+
+                   <div class="text-xs font-extrabold text-slate-800 bg-slate-200/80 rounded-xl p-2.5">
+                     Pendentes para amanhã: <span class="text-purple-700">${globalState.pendingFollowers.length}</span>
+                   </div>
+
+                   <button type="button" onclick="advanceToNextDay()" class="btn-cosmic w-full py-2.5 rounded-2xl bg-[#84CC16] text-[#090D16] text-xs font-black">
+                     Avançar para o Dia ${globalState.day + 1}
+                   </button>
+                 </div>`
+            }
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPasse() {
+      return `
+        <div class="p-4 space-y-4 tab-content">
+          <div class="orbit-card p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <h2 class="font-display text-lg font-bold">Carteira do Usuário</h2>
+              <span class="px-2.5 py-1 rounded-full bg-[#0F172A] text-[#A3E635] text-xs font-black">
+                ${esc(state.handle)}
+              </span>
+            </div>
+
+            <div class="p-3 rounded-2xl bg-[#0F172A] text-white border-2 border-[#090D16]">
+              ${renderCharacterWithPetSVG(state.look.species, state.look.suit, state.look.accessory, state.look.pet, 'h-24')}
+              <div class="mt-2 text-xs font-black text-[#A3E635] text-center">
+                Base: ${esc(state.profile.base)} • Planeta: ${esc(state.profile.planet)} • Profissão: ${esc(state.profile.profession)}
+              </div>
+            </div>
+
+            <div class="space-y-1.5">
+              <label for="profile-base-input" class="block text-xs font-black text-slate-900">
+                Base:
+              </label>
+              <div class="flex gap-2">
+                <input
+                  id="profile-base-input"
+                  type="text"
+                  value="${esc(state.profile.base)}"
+                  onkeydown="if (event.key === 'Enter') { event.preventDefault(); updateProfileBaseFromButton(); }"
+                  placeholder="Ex: base alien formador de aura"
+                  class="flex-1 px-3 py-2 rounded-xl border-2 border-[#090D16] text-xs font-bold bg-white"
+                />
+                <button type="button" onclick="updateProfileBaseFromButton()" class="btn-cosmic-sm px-3 py-2 rounded-xl bg-[#84CC16] text-[#090D16] text-xs font-black shrink-0">
+                  Atualizar
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <div class="text-xs font-black text-slate-900 mb-1.5">Planeta:</div>
+              <div class="flex flex-wrap gap-1.5">
+                ${PLANETS.map(planet => `
+                  <button type="button" onclick="selectProfilePlanet('${planet}')" class="btn-cosmic-sm px-3 py-1.5 rounded-xl text-xs ${state.profile.planet === planet ? 'bg-[#84CC16] text-[#090D16]' : 'bg-white text-slate-800'}">
+                    ${planet}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <div>
+              <div class="text-xs font-black text-slate-900 mb-1.5">Profissão:</div>
+              <div class="flex flex-wrap gap-1.5">
+                ${PROFESSIONS.map(prof => `
+                  <button type="button" onclick="selectProfileProfession('${prof}')" class="btn-cosmic-sm px-2.5 py-1.5 rounded-xl text-xs ${state.profile.profession === prof ? 'bg-[#38BDF8] text-[#090D16]' : 'bg-white text-slate-800'}">
+                    ${prof}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <button type="button" onclick="deleteMyOwnAccountData()" class="btn-cosmic-sm w-full py-2 rounded-xl bg-rose-600 text-white text-xs font-black mt-2">
+              Deletar apenas meus dados (${esc(state.handle)})
+            </button>
+          </div>
+
+          <div class="orbit-card p-4 space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="font-display text-base font-bold">Colonos & Carteiras (Dia ${globalState.day})</h3>
+              ${adminUnlocked
+                ? `<span class="text-[11px] font-black text-rose-700">Toque para deletar</span>`
+                : `<span class="text-[11px] font-bold text-slate-500">Toque para ver</span>`
+              }
+            </div>
+            ${globalState.activeColonists.length === 0
+              ? `<p class="text-xs font-bold text-slate-600">Nenhum colono registrado ainda.</p>`
+              : `<div class="space-y-2.5">
+                   ${globalState.activeColonists.map((col, idx) => `
+                     <button type="button" onclick="openWalletModal(${idx})" class="w-full text-left p-3 rounded-2xl bg-[#0F172A] text-white border-2 border-[#090D16] flex items-center justify-between gap-2 active:scale-[0.99] transition">
+                       <div>
+                         <div class="text-xs font-black text-[#A3E635]">COLONO #${idx + 1} • CÚPULA ${esc(col.dome)}</div>
+                         <div class="text-sm font-black mt-0.5">${esc(col.handle)}</div>
+                         <div class="text-[11px] text-slate-300 font-bold">Entrou no Dia ${col.arrivedOnDay}</div>
+                       </div>
+                       ${renderCharacterWithPetSVG(col.species, col.suit, 'nenhum', 'nenhum', 'h-14')}
+                     </button>
+                   `).join('')}
+                 </div>`
+            }
+          </div>
+        </div>
+      `;
+    }
+
+    function renderBases() {
+      return `
+        <div class="p-4 space-y-4 tab-content">
+          <div class="orbit-card p-4 space-y-2">
+            <h2 class="font-display text-lg font-bold">Bases da Colônia</h2>
+            <p class="text-xs font-bold text-slate-800">
+              Sua Base: <span class="font-black">${esc(state.profile.base)}</span> • Planeta: <span class="font-black">${esc(state.profile.planet)}</span>
+            </p>
+            <p class="text-xs font-bold text-slate-700">
+              Total de colonos ativos: <span class="font-black text-slate-950">${globalState.activeColonists.length}</span>
+            </p>
+            ${globalState.activeColonists.length === 0
+              ? `<p class="text-xs font-bold text-slate-600">Nenhum colono ativo ainda.</p>`
+              : `<div class="space-y-2 pt-1">
+                   ${globalState.activeColonists.map(col => `
+                     <div class="p-3 rounded-2xl bg-slate-100 border-2 border-[#090D16] flex items-center justify-between">
+                       <div>
+                         <div class="text-xs font-black text-slate-900">${esc(col.handle)}</div>
+                         <div class="text-[11px] font-bold text-slate-600">Cúpula ${esc(col.dome)} • Dia ${col.arrivedOnDay}</div>
+                       </div>
+                       <span class="px-2 py-1 rounded-lg bg-[#84CC16] text-[#090D16] text-[11px] font-black">Ativo</span>
+                     </div>
+                   `).join('')}
+                 </div>`
+            }
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAvisos() {
+      const items = state.notifications || [];
+      return `
+        <div class="p-4 space-y-4 tab-content">
+          <div class="orbit-card p-4 space-y-3">
+            <h2 class="font-display text-lg font-bold">Notificações / Avisos</h2>
+            ${items.length === 0
+              ? `<p class="text-xs font-bold text-slate-600">Nenhum aviso recebido ainda.</p>`
+              : `<div class="space-y-2.5">
+                   ${items.map(item => `
+                     <div class="p-3 rounded-2xl bg-amber-100 border-2 border-[#090D16] space-y-1">
+                       <div class="text-[11px] font-black text-amber-900">
+                         Aviso do Criador (${esc(item.from)}) • Dia ${item.day}
+                       </div>
+                       <div class="text-xs font-extrabold text-slate-950">
+                         ${esc(item.message)}
+                       </div>
+                     </div>
+                   `).join('')}
+                 </div>`
+            }
+          </div>
+        </div>
+      `;
+    }
+
+    function renderApp() {
+      if (!state) return;
+      syncMissionTimer();
+      updateHeaderAndNav();
+      const main = document.getElementById('app-main');
+      const views = {
+        inicio: renderInicio,
+        loja: renderLoja,
+        missoes: renderMissoes,
+        passe: renderPasse,
+        bases: renderBases,
+        avisos: renderAvisos
+      };
+      const fn = views[state.activeTab] || renderInicio;
+      main.innerHTML = fn();
+    }
+
+    setInterval(() => {
+      if (state && state.missionCooldownUntil) {
+        const prevSlot = state.missionSlot;
+        const hadTimer = Boolean(state.missionCooldownUntil);
+        syncMissionTimer();
+        if (state.activeTab === 'missoes' && (hadTimer !== Boolean(state.missionCooldownUntil) || prevSlot !== state.missionSlot)) {
+          renderApp();
+        }
+      }
+    }, 1000);
+
+    if (state) {
+      document.getElementById('login-screen').classList.add('hidden');
+      renderApp();
+    } else {
+      document.getElementById('login-screen').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
