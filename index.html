@@ -234,11 +234,8 @@
       </button>
     </header>
 
-    <!-- ÁREA PRINCIPAL -->
-    <main id="app-main" class="flex-1 overflow-y-auto pb-24"></main>
-
-    <!-- BARRA INFERIOR -->
-    <nav class="fixed bottom-0 w-full max-w-[434px] bg-[#0B1120] border-t-2 border-[#1E293B] px-1.5 py-1.5 z-40 grid grid-cols-6 gap-0.5">
+    <!-- BARRA SUPERIOR DE NAVEGAÇÃO -->
+    <nav class="sticky top-[62px] w-full bg-[#0B1120]/95 backdrop-blur-md border-b-2 border-[#1E293B] px-1.5 py-1.5 z-30 grid grid-cols-6 gap-0.5">
       <button type="button" onclick="switchTab('inicio')" data-tab="inicio" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl transition">
         <span class="text-[10px] font-extrabold">Início</span>
       </button>
@@ -251,14 +248,17 @@
       <button type="button" onclick="switchTab('passe')" data-tab="passe" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl transition">
         <span class="text-[10px] font-extrabold">Passe</span>
       </button>
-      <button type="button" onclick="switchTab('bases')" data-tab="bases" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl transition">
-        <span class="text-[10px] font-extrabold">Bases</span>
+      <button type="button" onclick="switchTab('mapa')" data-tab="mapa" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl transition">
+        <span class="text-[10px] font-extrabold">Mapa</span>
       </button>
       <button type="button" onclick="switchTab('avisos')" data-tab="avisos" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl transition relative">
         <span class="text-[10px] font-extrabold">Avisos</span>
         <span id="nav-avisos-badge" class="hidden text-[9px] font-black text-amber-300">•</span>
       </button>
     </nav>
+
+    <!-- ÁREA PRINCIPAL -->
+    <main id="app-main" class="flex-1 overflow-y-auto pb-6"></main>
   </div>
 
   <!-- MODAL PARA DELETAR CARTEIRA AO CLICAR NELA (MODO CRIADOR) -->
@@ -319,6 +319,7 @@
       { id: 'cor_azul', name: 'Cor Azul', type: 'cor', price: 0, suit: '#38BDF8', trim: '#0284C7', tentacles: false },
       { id: 'cor_verde', name: 'Cor Verde', type: 'cor', price: 0, suit: '#84CC16', trim: '#4D7C0F', tentacles: false },
       { id: 'cor_roxa', name: 'Cor Roxa', type: 'cor', price: 0, suit: '#C084FC', trim: '#7E22CE', tentacles: false },
+      { id: 'fantasia_gato_alien', name: 'Fantasia de Gato Alienígena', type: 'fantasia', price: 90, suit: '#4ADE80', trim: '#FACC15', tentacles: false, catEars: true },
       { id: 'fantasia_tentaculos', name: 'Fantasia de Alien com Tentáculos', type: 'fantasia', price: 80, suit: '#A855F7', trim: '#FACC15', tentacles: true },
       { id: 'fantasia_comandante', name: 'Fantasia Comandante Solar', type: 'fantasia', price: 120, suit: '#F59E0B', trim: '#FEF08A', tentacles: false }
     ];
@@ -331,9 +332,10 @@
     ];
 
     const PETS = [
-      { id: 'nenhum', name: 'Sem animal', price: 0, fur: 'transparent', ear: 'transparent', eye: 'transparent' },
-      { id: 'mini_gato_alien', name: 'Mini gato alienígena', price: 50, fur: '#A3E635', ear: '#65A30D', eye: '#090D16' },
-      { id: 'mini_gato_nebula', name: 'Mini gato nebuloso', price: 80, fur: '#C084FC', ear: '#7E22CE', eye: '#090D16' }
+      { id: 'nenhum', name: 'Sem animal', price: 0, kind: 'none', fur: 'transparent', ear: 'transparent', eye: 'transparent' },
+      { id: 'mini_nave', name: 'Mini nave alienígena', price: 70, kind: 'ship', fur: '#38BDF8', ear: '#A3E635', eye: '#FACC15' },
+      { id: 'mini_gato_alien', name: 'Mini gato alienígena', price: 50, kind: 'cat', fur: '#A3E635', ear: '#65A30D', eye: '#090D16' },
+      { id: 'mini_gato_nebula', name: 'Mini gato nebuloso', price: 80, kind: 'cat', fur: '#C084FC', ear: '#7E22CE', eye: '#090D16' }
     ];
 
     function normalizeHandle(raw) {
@@ -422,6 +424,7 @@
     let activeKey = localStorage.getItem(ACTIVE_ACCOUNT_KEY) || null;
     let state = activeKey && accounts[activeKey] ? ensureAccountFields(accounts[activeKey]) : null;
     let adminUnlocked = false;
+    let selectedMapPlanet = state ? state.profile.planet : 'Lua';
 
     if (rtdb) {
       rtdb.ref('colony_global').on('value', (snap) => {
@@ -469,18 +472,33 @@
       }
     }
 
+    function syncColonistDirectory(accObj) {
+      const lower = accObj.handle.toLowerCase();
+      const idx = globalState.activeColonists.findIndex(
+        c => normalizeHandle(c.handle).toLowerCase() === lower
+      );
+      if (idx !== -1) {
+        globalState.activeColonists[idx].species = accObj.look.species || 'creme';
+        globalState.activeColonists[idx].suit = accObj.look.suit || 'cor_branca';
+        globalState.activeColonists[idx].planet = accObj.profile.planet || 'Lua';
+        globalState.activeColonists[idx].base = accObj.profile.base || 'Base Alfa-01';
+        saveGlobalState();
+      }
+    }
+
     function persistCurrentState() {
       if (!state || !activeKey) return;
       saveAccountToCloud(state);
+      syncColonistDirectory(state);
       updateHeaderAndNav();
     }
 
     function registerColonistGlobally(accObj) {
       const lower = accObj.handle.toLowerCase();
-      const alreadyActive = globalState.activeColonists.some(
+      const existingIdx = globalState.activeColonists.findIndex(
         c => normalizeHandle(c.handle).toLowerCase() === lower
       );
-      if (!alreadyActive) {
+      if (existingIdx === -1) {
         const num = globalState.activeColonists.length + 1;
         globalState.activeColonists.push({
           id: `col_${Date.now()}_${num}`,
@@ -488,9 +506,13 @@
           arrivedOnDay: globalState.day,
           species: accObj.look.species || 'creme',
           suit: accObj.look.suit || 'cor_branca',
+          planet: accObj.profile.planet || 'Lua',
+          base: accObj.profile.base || 'Base Alfa-01',
           dome: `B-${String(num).padStart(2, '0')}`
         });
         saveGlobalState();
+      } else {
+        syncColonistDirectory(accObj);
       }
     }
 
@@ -538,6 +560,13 @@
             <rect x="24" y="34" width="9" height="16" rx="4.5" fill="${sp.ear}"/>
             <rect x="87" y="34" width="9" height="16" rx="4.5" fill="${sp.ear}"/>
 
+            ${st.catEars ? `
+              <path d="M35 23 L42 6 L53 20 Z" fill="${st.suit}" stroke="#090D16" stroke-width="2.2"/>
+              <path d="M85 23 L78 6 L67 20 Z" fill="${st.suit}" stroke="#090D16" stroke-width="2.2"/>
+              <path d="M39 21 L43 10 L50 19 Z" fill="${st.trim}"/>
+              <path d="M81 21 L77 10 L70 19 Z" fill="${st.trim}"/>
+            ` : ''}
+
             ${accessoryId === 'chapeu' ? `
               <ellipse cx="60" cy="18" rx="24" ry="5" fill="#FACC15" stroke="#090D16" stroke-width="2"/>
               <path d="M44 17 Q60 4 76 17 Z" fill="#38BDF8" stroke="#090D16" stroke-width="2"/>
@@ -546,6 +575,14 @@
             <ellipse cx="60" cy="41" rx="28" ry="23" fill="${sp.skin}"/>
             <ellipse cx="50" cy="40" rx="4.5" ry="7" fill="${sp.eye}"/>
             <ellipse cx="70" cy="40" rx="4.5" ry="7" fill="${sp.eye}"/>
+
+            ${st.catEars ? `
+              <line x1="25" y1="44" x2="38" y2="45" stroke="#090D16" stroke-width="1.8" stroke-linecap="round"/>
+              <line x1="25" y1="50" x2="38" y2="49" stroke="#090D16" stroke-width="1.8" stroke-linecap="round"/>
+              <line x1="95" y1="44" x2="82" y2="45" stroke="#090D16" stroke-width="1.8" stroke-linecap="round"/>
+              <line x1="95" y1="50" x2="82" y2="49" stroke="#090D16" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M82 90 Q105 82 103 64" fill="none" stroke="${st.suit}" stroke-width="5" stroke-linecap="round"/>
+            ` : ''}
 
             ${accessoryId === 'oculos' ? `
               <rect x="41" y="34" width="16" height="11" rx="3" fill="#0F172A" stroke="#38BDF8" stroke-width="2"/>
@@ -572,7 +609,17 @@
             <rect x="43" y="99" width="12" height="21" rx="3" fill="${st.suit}"/>
             <rect x="65" y="99" width="12" height="21" rx="3" fill="${st.suit}"/>
           </svg>
-          ${hasPet ? `
+          ${hasPet ? (pet.kind === 'ship' ? `
+            <svg viewBox="0 0 64 64" class="h-14 w-14 shrink-0 mb-2 animate-float">
+              <path d="M22 44 L17 57 L26 48 Z" fill="#FACC15" stroke="#090D16" stroke-width="2"/>
+              <path d="M42 44 L47 57 L38 48 Z" fill="#FACC15" stroke="#090D16" stroke-width="2"/>
+              <path d="M20 28 Q32 14 44 28 Z" fill="#BAE6FD" stroke="#090D16" stroke-width="2.3"/>
+              <ellipse cx="32" cy="34" rx="24" ry="9" fill="#38BDF8" stroke="#090D16" stroke-width="2.5"/>
+              <circle cx="20" cy="34" r="2.5" fill="#A3E635"/>
+              <circle cx="32" cy="35" r="2.5" fill="#FACC15"/>
+              <circle cx="44" cy="34" r="2.5" fill="#A3E635"/>
+            </svg>
+          ` : `
             <svg viewBox="0 0 64 64" class="h-14 w-14 shrink-0 mb-1 animate-float">
               <path d="M16 24 L22 10 L30 22 Z" fill="${pet.ear}" stroke="#090D16" stroke-width="2.5"/>
               <path d="M48 24 L42 10 L34 22 Z" fill="${pet.ear}" stroke="#090D16" stroke-width="2.5"/>
@@ -583,7 +630,7 @@
               <ellipse cx="32" cy="46" rx="11" ry="10" fill="${pet.fur}" stroke="#090D16" stroke-width="2.5"/>
               <path d="M43 48 Q56 44 54 34" fill="none" stroke="${pet.ear}" stroke-width="4" stroke-linecap="round"/>
             </svg>
-          ` : ''}
+          `) : ''}
         </div>
       `;
     }
@@ -627,6 +674,7 @@
       }
 
       registerColonistGlobally(state);
+      selectedMapPlanet = state.profile.planet || 'Lua';
       activeKey = key;
       localStorage.setItem(ACTIVE_ACCOUNT_KEY, activeKey);
       clearLoginError();
@@ -687,6 +735,7 @@
     function selectProfilePlanet(planet) {
       if (!state || !PLANETS.includes(planet)) return;
       state.profile.planet = planet;
+      selectedMapPlanet = planet;
       persistCurrentState();
       renderApp();
       showToast(`Planeta alterado para ${planet}!`);
@@ -698,6 +747,12 @@
       persistCurrentState();
       renderApp();
       showToast(`Profissão: ${profession}!`);
+    }
+
+    function selectMapPlanet(planet) {
+      if (!PLANETS.includes(planet)) return;
+      selectedMapPlanet = planet;
+      renderApp();
     }
 
     function syncMissionTimer(now = Date.now()) {
@@ -905,6 +960,8 @@
         registeredOnDay: globalState.day,
         species: SPECIES[indexNum % SPECIES.length].id,
         suit: 'cor_branca',
+        planet: 'Lua',
+        base: 'Base Alfa-01',
         dome: `B-${String(indexNum).padStart(2, '0')}`
       });
 
@@ -1056,7 +1113,7 @@
           </div>
 
           <div class="orbit-card p-4 space-y-2.5">
-            <h3 class="font-display text-base font-bold">Animais da Colônia</h3>
+            <h3 class="font-display text-base font-bold">Animais & Naves da Colônia</h3>
             <div class="grid grid-cols-1 gap-2.5">
               ${PETS.map(pet => {
                 const owned = state.ownedPets.includes(pet.id);
@@ -1141,7 +1198,7 @@
       state.look.pet = id;
       persistCurrentState();
       renderApp();
-      showToast('Animal colocado ao lado do personagem!');
+      showToast('Companheiro colocado ao lado!');
     }
 
     function buyPet(id) {
@@ -1374,7 +1431,7 @@
                        <div>
                          <div class="text-xs font-black text-[#A3E635]">COLONO #${idx + 1} • CÚPULA ${esc(col.dome)}</div>
                          <div class="text-sm font-black mt-0.5">${esc(col.handle)}</div>
-                         <div class="text-[11px] text-slate-300 font-bold">Entrou no Dia ${col.arrivedOnDay}</div>
+                         <div class="text-[11px] text-slate-300 font-bold">Planeta ${esc(col.planet || 'Lua')} • ${esc(col.base || 'Base Alfa-01')}</div>
                        </div>
                        ${renderCharacterWithPetSVG(col.species, col.suit, 'nenhum', 'nenhum', 'h-14')}
                      </button>
@@ -1386,31 +1443,157 @@
       `;
     }
 
-    function renderBases() {
+    function getResidentsForPlanet(planet) {
+      const mapByHandle = new Map();
+
+      Object.values(accounts).forEach(acc => {
+        if (!acc || !acc.handle) return;
+        const p = (acc.profile && acc.profile.planet) || 'Lua';
+        if (p === planet) {
+          mapByHandle.set(acc.handle.toLowerCase(), {
+            handle: acc.handle,
+            base: (acc.profile && acc.profile.base) || 'Base Alfa-01',
+            planet: p,
+            profession: (acc.profile && acc.profile.profession) || 'Morador',
+            species: (acc.look && acc.look.species) || 'creme',
+            suit: (acc.look && acc.look.suit) || 'cor_branca'
+          });
+        }
+      });
+
+      globalState.activeColonists.forEach(col => {
+        if (!col || !col.handle) return;
+        const key = col.handle.toLowerCase();
+        const p = col.planet || 'Lua';
+        if (p === planet && !mapByHandle.has(key)) {
+          mapByHandle.set(key, {
+            handle: col.handle,
+            base: col.base || 'Base Alfa-01',
+            planet: p,
+            profession: 'Morador',
+            species: col.species || 'creme',
+            suit: col.suit || 'cor_branca'
+          });
+        }
+      });
+
+      return Array.from(mapByHandle.values());
+    }
+
+    function renderMapa() {
+      const planetThemes = {
+        'Lua': {
+          title: 'Mini Mapa da Lua',
+          bg: 'from-[#1E293B] via-[#334155] to-[#475569]',
+          ground: '#94A3B8',
+          crater: '#64748B',
+          dome: '#38BDF8',
+          badge: 'bg-slate-200 text-slate-950'
+        },
+        'Marte': {
+          title: 'Mini Mapa de Marte',
+          bg: 'from-[#450A0A] via-[#7C2D12] to-[#9A3412]',
+          ground: '#EA580C',
+          crater: '#9A3412',
+          dome: '#FACC15',
+          badge: 'bg-orange-200 text-orange-950'
+        },
+        'Júpiter': {
+          title: 'Mini Mapa de Júpiter',
+          bg: 'from-[#422006] via-[#854D0E] to-[#A16207]',
+          ground: '#EAB308',
+          crater: '#A16207',
+          dome: '#A855F7',
+          badge: 'bg-amber-200 text-amber-950'
+        }
+      };
+
+      const theme = planetThemes[selectedMapPlanet] || planetThemes['Lua'];
+      const residents = getResidentsForPlanet(selectedMapPlanet);
+
       return `
         <div class="p-4 space-y-4 tab-content">
-          <div class="orbit-card p-4 space-y-2">
-            <h2 class="font-display text-lg font-bold">Bases da Colônia</h2>
-            <p class="text-xs font-bold text-slate-800">
-              Sua Base: <span class="font-black">${esc(state.profile.base)}</span> • Planeta: <span class="font-black">${esc(state.profile.planet)}</span>
-            </p>
-            <p class="text-xs font-bold text-slate-700">
-              Total de colonos ativos: <span class="font-black text-slate-950">${globalState.activeColonists.length}</span>
-            </p>
-            ${globalState.activeColonists.length === 0
-              ? `<p class="text-xs font-bold text-slate-600">Nenhum colono ativo ainda.</p>`
-              : `<div class="space-y-2 pt-1">
-                   ${globalState.activeColonists.map(col => `
-                     <div class="p-3 rounded-2xl bg-slate-100 border-2 border-[#090D16] flex items-center justify-between">
-                       <div>
-                         <div class="text-xs font-black text-slate-900">${esc(col.handle)}</div>
-                         <div class="text-[11px] font-bold text-slate-600">Cúpula ${esc(col.dome)} • Dia ${col.arrivedOnDay}</div>
-                       </div>
-                       <span class="px-2 py-1 rounded-lg bg-[#84CC16] text-[#090D16] text-[11px] font-black">Ativo</span>
-                     </div>
-                   `).join('')}
-                 </div>`
-            }
+          <div class="orbit-card p-4 space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <h2 class="font-display text-lg font-bold">Mapa Estelar</h2>
+              <span class="px-2.5 py-1 rounded-full ${theme.badge} text-[11px] font-black">
+                ${residents.length} morador(es)
+              </span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+              ${PLANETS.map(planet => `
+                <button
+                  type="button"
+                  onclick="selectMapPlanet('${planet}')"
+                  class="btn-cosmic-sm py-2 rounded-2xl text-xs font-black ${selectedMapPlanet === planet ? 'bg-[#84CC16] text-[#090D16]' : 'bg-white text-slate-800'}"
+                >
+                  ${planet}
+                </button>
+              `).join('')}
+            </div>
+
+            <!-- MINI MAPA VISUAL DO PLANETA -->
+            <div class="rounded-3xl bg-gradient-to-b ${theme.bg} border-[3px] border-[#090D16] p-3 text-white relative overflow-hidden">
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-display text-sm font-bold">${theme.title}</span>
+                <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-black/40">
+                  Setor ${selectedMapPlanet}
+                </span>
+              </div>
+
+              <!-- Terreno / Superfície do Mini Mapa com Bases e Nomes em Cima -->
+              <div class="relative rounded-2xl border-2 border-black/40 p-3 min-h-[165px] flex flex-wrap items-end justify-center gap-3" style="background-color: ${theme.ground};">
+                <div class="absolute top-3 left-4 w-7 h-3 rounded-full opacity-40" style="background-color: ${theme.crater};"></div>
+                <div class="absolute top-7 right-6 w-10 h-4 rounded-full opacity-40" style="background-color: ${theme.crater};"></div>
+
+                ${residents.length === 0
+                  ? `<div class="my-auto text-center bg-black/65 px-3 py-2 rounded-2xl text-xs font-extrabold text-white">
+                       Nenhuma base construída em ${selectedMapPlanet} ainda.
+                     </div>`
+                  : residents.map(res => {
+                      const cleanName = res.handle.replace(/^@/, '');
+                      return `
+                        <div class="relative z-10 flex flex-col items-center bg-black/45 px-2.5 py-2 rounded-2xl border border-white/25 max-w-[135px]">
+                          <div class="px-2 py-0.5 rounded-full bg-[#090D16] text-[#A3E635] text-[10px] font-black border border-[#A3E635] mb-1 truncate max-w-full">
+                            ${esc(cleanName)}
+                          </div>
+                          <!-- Ícone de Base / Cúpula -->
+                          <svg viewBox="0 0 64 44" class="w-14 h-10">
+                            <path d="M12 34 A20 20 0 0 1 52 34 Z" fill="${theme.dome}" stroke="#090D16" stroke-width="3"/>
+                            <rect x="8" y="33" width="48" height="7" rx="3" fill="#0F172A" stroke="#090D16" stroke-width="2.5"/>
+                            <rect x="27" y="24" width="10" height="10" rx="2" fill="#F8FAFC" stroke="#090D16" stroke-width="2"/>
+                          </svg>
+                          <div class="text-[10px] font-black text-white text-center leading-tight mt-0.5 truncate max-w-full">
+                            ${esc(res.base)}
+                          </div>
+                        </div>
+                      `;
+                    }).join('')
+                }
+              </div>
+            </div>
+
+            <!-- LISTA DETALHADA DOS MORADORES DO PLANETA SELECIONADO -->
+            <div class="space-y-2 pt-1">
+              <h3 class="font-display text-sm font-bold text-slate-900">
+                Quem mora em ${selectedMapPlanet}:
+              </h3>
+              ${residents.length === 0
+                ? `<p class="text-xs font-bold text-slate-600">Ninguém morando em ${selectedMapPlanet} no momento.</p>`
+                : residents.map(res => `
+                    <div class="p-2.5 rounded-2xl bg-slate-100 border-2 border-[#090D16] flex items-center justify-between gap-2">
+                      <div>
+                        <div class="text-xs font-black text-slate-950">${esc(res.handle)}</div>
+                        <div class="text-[11px] font-bold text-slate-700">
+                          Base: <span class="font-black">${esc(res.base)}</span> • ${esc(res.profession)}
+                        </div>
+                      </div>
+                      ${renderCharacterWithPetSVG(res.species, res.suit, 'nenhum', 'nenhum', 'h-12')}
+                    </div>
+                  `).join('')
+              }
+            </div>
           </div>
         </div>
       `;
@@ -1452,7 +1635,8 @@
         loja: renderLoja,
         missoes: renderMissoes,
         passe: renderPasse,
-        bases: renderBases,
+        mapa: renderMapa,
+        bases: renderMapa,
         avisos: renderAvisos
       };
       const fn = views[state.activeTab] || renderInicio;
@@ -1479,3 +1663,5 @@
   </script>
 </body>
 </html>
+
+
