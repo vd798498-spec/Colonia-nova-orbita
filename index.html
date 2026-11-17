@@ -235,24 +235,27 @@
     </header>
 
     <!-- BARRA SUPERIOR DE NAVEGAÇÃO -->
-    <nav class="sticky top-[62px] w-full bg-[#0B1120]/95 backdrop-blur-md border-b-2 border-[#1E293B] px-1.5 py-1.5 z-30 grid grid-cols-6 gap-0.5">
+    <nav class="sticky top-[62px] w-full bg-[#0B1120]/95 backdrop-blur-md border-b-2 border-[#1E293B] px-1 py-1.5 z-30 grid grid-cols-7 gap-0.5">
       <button type="button" onclick="switchTab('inicio')" data-tab="inicio" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl transition">
-        <span class="text-[10px] font-extrabold">Início</span>
+        <span class="text-[9px] font-extrabold">Início</span>
       </button>
       <button type="button" onclick="switchTab('loja')" data-tab="loja" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl transition">
-        <span class="text-[10px] font-extrabold">Loja</span>
+        <span class="text-[9px] font-extrabold">Loja</span>
       </button>
       <button type="button" onclick="switchTab('missoes')" data-tab="missoes" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl transition">
-        <span class="text-[10px] font-extrabold">Missões</span>
+        <span class="text-[9px] font-extrabold">Missões</span>
+      </button>
+      <button type="button" onclick="switchTab('codigos')" data-tab="codigos" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl transition">
+        <span class="text-[9px] font-extrabold">Códigos</span>
       </button>
       <button type="button" onclick="switchTab('passe')" data-tab="passe" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl transition">
-        <span class="text-[10px] font-extrabold">Passe</span>
+        <span class="text-[9px] font-extrabold">Passe</span>
       </button>
       <button type="button" onclick="switchTab('mapa')" data-tab="mapa" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl transition">
-        <span class="text-[10px] font-extrabold">Mapa</span>
+        <span class="text-[9px] font-extrabold">Mapa</span>
       </button>
       <button type="button" onclick="switchTab('avisos')" data-tab="avisos" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl transition relative">
-        <span class="text-[10px] font-extrabold">Avisos</span>
+        <span class="text-[9px] font-extrabold">Avisos</span>
         <span id="nav-avisos-badge" class="hidden text-[9px] font-black text-amber-300">•</span>
       </button>
     </nav>
@@ -261,7 +264,7 @@
     <main id="app-main" class="flex-1 overflow-y-auto pb-6"></main>
   </div>
 
-  <!-- MODAL PARA DELETAR CARTEIRA AO CLICAR NELA (MODO CRIADOR) -->
+  <!-- MODAL PARA CARTEIRA / MOTIVO DE DELETAR CONTA -->
   <div id="wallet-modal" class="fixed inset-0 z-50 bg-black/75 hidden items-center justify-center p-4">
     <div id="wallet-modal-card" class="bg-[#F8FAFC] text-[#0F172A] border-[3px] border-[#090D16] rounded-3xl w-full max-w-[360px] p-5 shadow-2xl relative">
       <button type="button" onclick="closeWalletModal()" aria-label="Fechar" class="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-white border-2 border-[#090D16] font-black text-xs flex items-center justify-center">
@@ -297,14 +300,35 @@
     const ACTIVE_ACCOUNT_KEY = 'nova_orbita_active_account_v8';
     const ADMIN_ACCESS_CODE = 'Yuragafa610';
     const ONE_HOUR_MS = 60 * 60 * 1000;
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+    const DAILY_STARS_REWARD = 15;
+    const MISSION_STARS_REWARD = 18;
+
+    const PROMO_CODES = [
+      {
+        code: 'alien aura',
+        reward: 50,
+        durationDays: 30,
+        description: 'Ganha +50 moedas/estrelas e dura até 30 dias.'
+      }
+    ];
+
+    const WEEK_DAYS = [
+      { key: 'dom', label: 'Dom' },
+      { key: 'seg', label: 'seg' },
+      { key: 'ter', label: 'ter' },
+      { key: 'qua', label: 'qua' },
+      { key: 'qui', label: 'qui' },
+      { key: 'sex', label: 'sex' },
+      { key: 'sab', label: 'sab' }
+    ];
 
     const PLANETS = ['Lua', 'Marte', 'Júpiter'];
     const PROFESSIONS = ['Morador', 'Jornalista', 'Vendedor', 'Vendedor de Naves', 'Explorador'];
 
     const MISSION_ROTATION = [
-      { id: 'patrulha', label: 'Fazer patrulha', reward: 50, btnColor: 'bg-[#FACC15]' },
-      { id: 'varredura', label: 'Varredura orbital', reward: 50, btnColor: 'bg-[#38BDF8]' },
-      { id: 'sinal', label: 'Calibrar antena estelar', reward: 50, btnColor: 'bg-[#A3E635]' }
+      { id: 'patrulha', label: 'Missão 1: Fazer patrulha', reward: MISSION_STARS_REWARD, btnColor: 'bg-[#FACC15]' },
+      { id: 'varredura', label: 'Missão 2: Varredura orbital', reward: MISSION_STARS_REWARD, btnColor: 'bg-[#38BDF8]' }
     ];
 
     const SPECIES = [
@@ -319,6 +343,8 @@
       { id: 'cor_azul', name: 'Cor Azul', type: 'cor', price: 0, suit: '#38BDF8', trim: '#0284C7', tentacles: false },
       { id: 'cor_verde', name: 'Cor Verde', type: 'cor', price: 0, suit: '#84CC16', trim: '#4D7C0F', tentacles: false },
       { id: 'cor_roxa', name: 'Cor Roxa', type: 'cor', price: 0, suit: '#C084FC', trim: '#7E22CE', tentacles: false },
+      { id: 'roupa_astronauta', name: 'Roupa de Astronauta', type: 'fantasia', price: 110, suit: '#F1F5F9', trim: '#38BDF8', tentacles: false, astronautHelmet: true },
+      { id: 'terno_espacial', name: 'Terno Espacial', type: 'fantasia', price: 100, suit: '#1E293B', trim: '#FACC15', tentacles: false, suitTie: true },
       { id: 'fantasia_gato_alien', name: 'Fantasia de Gato Alienígena', type: 'fantasia', price: 90, suit: '#4ADE80', trim: '#FACC15', tentacles: false, catEars: true },
       { id: 'fantasia_tentaculos', name: 'Fantasia de Alien com Tentáculos', type: 'fantasia', price: 80, suit: '#A855F7', trim: '#FACC15', tentacles: true },
       { id: 'fantasia_comandante', name: 'Fantasia Comandante Solar', type: 'fantasia', price: 120, suit: '#F59E0B', trim: '#FEF08A', tentacles: false }
@@ -326,6 +352,7 @@
 
     const ACCESSORIES = [
       { id: 'nenhum', name: 'Sem acessório', price: 0 },
+      { id: 'coroa_cristais', name: 'Coroa com Cristais Coloridos', price: 55 },
       { id: 'oculos', name: 'Óculos Espacial', price: 30 },
       { id: 'brincos', name: 'Brincos Estelares', price: 35 },
       { id: 'chapeu', name: 'Chapéu da Galáxia', price: 45 }
@@ -333,10 +360,17 @@
 
     const PETS = [
       { id: 'nenhum', name: 'Sem animal', price: 0, kind: 'none', fur: 'transparent', ear: 'transparent', eye: 'transparent' },
+      { id: 'cachorro_alien', name: 'Cachorro Alien', price: 65, kind: 'dog', fur: '#A3E635', ear: '#65A30D', eye: '#090D16' },
+      { id: 'mini_alien', name: 'Mini Alien', price: 60, kind: 'alien', fur: '#A3E635', ear: '#65A30D', eye: '#090D16' },
       { id: 'mini_nave', name: 'Mini nave alienígena', price: 70, kind: 'ship', fur: '#38BDF8', ear: '#A3E635', eye: '#FACC15' },
       { id: 'mini_gato_alien', name: 'Mini gato alienígena', price: 50, kind: 'cat', fur: '#A3E635', ear: '#65A30D', eye: '#090D16' },
       { id: 'mini_gato_nebula', name: 'Mini gato nebuloso', price: 80, kind: 'cat', fur: '#C084FC', ear: '#7E22CE', eye: '#090D16' }
     ];
+
+    function getCurrentWeekDayKey() {
+      const idx = new Date().getDay();
+      return WEEK_DAYS[idx] ? WEEK_DAYS[idx].key : 'dom';
+    }
 
     function normalizeHandle(raw) {
       const clean = String(raw || '').trim().replace(/\s+/g, '');
@@ -354,6 +388,9 @@
         pin: String(pin).trim(),
         activeTab: 'inicio',
         stars: 0,
+        lastDailyClaimDay: 0,
+        claimedWeekDays: {},
+        redeemedCodes: [],
         notifications: [],
         look: { species: 'creme', suit: 'cor_branca', accessory: 'nenhum', pet: 'nenhum' },
         ownedSuits: ['cor_branca', 'cor_azul', 'cor_verde', 'cor_roxa'],
@@ -374,6 +411,9 @@
       if (!acc.look.suit) acc.look.suit = 'cor_branca';
       if (!acc.look.accessory) acc.look.accessory = 'nenhum';
       if (!acc.look.pet) acc.look.pet = 'nenhum';
+      if (typeof acc.lastDailyClaimDay !== 'number') acc.lastDailyClaimDay = 0;
+      if (!acc.claimedWeekDays || typeof acc.claimedWeekDays !== 'object') acc.claimedWeekDays = {};
+      if (!Array.isArray(acc.redeemedCodes)) acc.redeemedCodes = [];
       if (!Array.isArray(acc.ownedSuits)) acc.ownedSuits = ['cor_branca', 'cor_azul', 'cor_verde', 'cor_roxa'];
       if (!Array.isArray(acc.ownedAccessories)) acc.ownedAccessories = ['nenhum'];
       if (!Array.isArray(acc.ownedPets)) acc.ownedPets = ['nenhum'];
@@ -388,7 +428,9 @@
     let globalState = {
       day: 1,
       activeColonists: [],
-      pendingFollowers: []
+      pendingFollowers: [],
+      deletionReasons: [],
+      codeCreatedAt: {}
     };
 
     function loadLocalAccounts() {
@@ -412,11 +454,13 @@
           return {
             day: parsed.day || 1,
             activeColonists: Array.isArray(parsed.activeColonists) ? parsed.activeColonists : [],
-            pendingFollowers: Array.isArray(parsed.pendingFollowers) ? parsed.pendingFollowers : []
+            pendingFollowers: Array.isArray(parsed.pendingFollowers) ? parsed.pendingFollowers : [],
+            deletionReasons: Array.isArray(parsed.deletionReasons) ? parsed.deletionReasons : [],
+            codeCreatedAt: parsed.codeCreatedAt && typeof parsed.codeCreatedAt === 'object' ? parsed.codeCreatedAt : {}
           };
         }
       } catch (e) {}
-      return { day: 1, activeColonists: [], pendingFollowers: [] };
+      return { day: 1, activeColonists: [], pendingFollowers: [], deletionReasons: [], codeCreatedAt: {} };
     }
 
     let accounts = loadLocalAccounts();
@@ -433,6 +477,8 @@
           globalState.day = val.day || 1;
           globalState.activeColonists = Array.isArray(val.activeColonists) ? val.activeColonists : [];
           globalState.pendingFollowers = Array.isArray(val.pendingFollowers) ? val.pendingFollowers : [];
+          globalState.deletionReasons = Array.isArray(val.deletionReasons) ? val.deletionReasons : [];
+          globalState.codeCreatedAt = val.codeCreatedAt && typeof val.codeCreatedAt === 'object' ? val.codeCreatedAt : {};
           localStorage.setItem(GLOBAL_STORAGE_KEY, JSON.stringify(globalState));
           if (state) renderApp();
         }
@@ -557,6 +603,12 @@
       return `
         <div class="flex items-end justify-center gap-2 ${sizeClass} mx-auto">
           <svg viewBox="0 0 120 135" class="h-full w-auto">
+            <!-- Antenas de alienígena no personagem -->
+            <path d="M46 21 Q40 9 34 6" fill="none" stroke="${sp.ear}" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="34" cy="6" r="4" fill="#A3E635" stroke="#090D16" stroke-width="1.8"/>
+            <path d="M74 21 Q80 9 86 6" fill="none" stroke="${sp.ear}" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="86" cy="6" r="4" fill="#A3E635" stroke="#090D16" stroke-width="1.8"/>
+
             <rect x="24" y="34" width="9" height="16" rx="4.5" fill="${sp.ear}"/>
             <rect x="87" y="34" width="9" height="16" rx="4.5" fill="${sp.ear}"/>
 
@@ -567,14 +619,26 @@
               <path d="M81 21 L77 10 L70 19 Z" fill="${st.trim}"/>
             ` : ''}
 
+            <ellipse cx="60" cy="41" rx="28" ry="23" fill="${sp.skin}"/>
+            <ellipse cx="50" cy="40" rx="4.5" ry="7" fill="${sp.eye}"/>
+            <ellipse cx="70" cy="40" rx="4.5" ry="7" fill="${sp.eye}"/>
+
+            ${st.astronautHelmet ? `
+              <ellipse cx="60" cy="40" rx="34" ry="28" fill="rgba(125, 211, 252, 0.28)" stroke="#E2E8F0" stroke-width="3.5"/>
+              <path d="M38 27 Q52 20 68 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity="0.8"/>
+            ` : ''}
+
+            ${accessoryId === 'coroa_cristais' ? `
+              <polygon points="38,20 42,7 50,15 60,5 70,15 78,7 82,20" fill="#FACC15" stroke="#090D16" stroke-width="2" stroke-linejoin="round"/>
+              <circle cx="46" cy="14" r="2.7" fill="#EC4899" stroke="#090D16" stroke-width="1.2"/>
+              <circle cx="60" cy="12" r="3" fill="#38BDF8" stroke="#090D16" stroke-width="1.2"/>
+              <circle cx="74" cy="14" r="2.7" fill="#A3E635" stroke="#090D16" stroke-width="1.2"/>
+            ` : ''}
+
             ${accessoryId === 'chapeu' ? `
               <ellipse cx="60" cy="18" rx="24" ry="5" fill="#FACC15" stroke="#090D16" stroke-width="2"/>
               <path d="M44 17 Q60 4 76 17 Z" fill="#38BDF8" stroke="#090D16" stroke-width="2"/>
             ` : ''}
-
-            <ellipse cx="60" cy="41" rx="28" ry="23" fill="${sp.skin}"/>
-            <ellipse cx="50" cy="40" rx="4.5" ry="7" fill="${sp.eye}"/>
-            <ellipse cx="70" cy="40" rx="4.5" ry="7" fill="${sp.eye}"/>
 
             ${st.catEars ? `
               <line x1="25" y1="44" x2="38" y2="45" stroke="#090D16" stroke-width="1.8" stroke-linecap="round"/>
@@ -602,14 +666,33 @@
               <path d="M74 98 Q82 116 76 126" fill="none" stroke="${st.trim}" stroke-width="4.5" stroke-linecap="round"/>
             ` : ''}
 
-            <rect x="23" y="69" width="12" height="24" rx="6" fill="${st.suit}"/>
-            <rect x="85" y="69" width="12" height="24" rx="6" fill="${st.suit}"/>
-            <rect x="38" y="66" width="44" height="32" rx="4" fill="${st.suit}"/>
-            <rect x="53" y="75" width="14" height="14" rx="2" fill="none" stroke="${st.trim}" stroke-width="2.5"/>
-            <rect x="43" y="99" width="12" height="21" rx="3" fill="${st.suit}"/>
-            <rect x="65" y="99" width="12" height="21" rx="3" fill="${st.suit}"/>
+            <rect x="23" y="69" width="12" height="24" rx="6" fill="${st.suit}" stroke="${st.astronautHelmet ? '#090D16' : 'none'}" stroke-width="${st.astronautHelmet ? '2' : '0'}"/>
+            <rect x="85" y="69" width="12" height="24" rx="6" fill="${st.suit}" stroke="${st.astronautHelmet ? '#090D16' : 'none'}" stroke-width="${st.astronautHelmet ? '2' : '0'}"/>
+            <rect x="38" y="66" width="44" height="32" rx="4" fill="${st.suit}" stroke="${st.astronautHelmet ? '#090D16' : 'none'}" stroke-width="${st.astronautHelmet ? '2' : '0'}"/>
+            ${st.suitTie ? `
+              <polygon points="56,66 64,66 60,74" fill="#F8FAFC"/>
+              <polygon points="58,74 62,74 64,92 60,96 56,92" fill="${st.trim}"/>
+            ` : `
+              <rect x="53" y="75" width="14" height="14" rx="2" fill="none" stroke="${st.trim}" stroke-width="2.5"/>
+            `}
+            <rect x="43" y="99" width="12" height="21" rx="3" fill="${st.suit}" stroke="${st.astronautHelmet ? '#090D16' : 'none'}" stroke-width="${st.astronautHelmet ? '2' : '0'}"/>
+            <rect x="65" y="99" width="12" height="21" rx="3" fill="${st.suit}" stroke="${st.astronautHelmet ? '#090D16' : 'none'}" stroke-width="${st.astronautHelmet ? '2' : '0'}"/>
           </svg>
-          ${hasPet ? (pet.kind === 'ship' ? `
+          ${hasPet ? (pet.kind === 'dog' ? `
+            <svg viewBox="0 0 64 64" class="h-14 w-14 shrink-0 mb-1 animate-float">
+              <path d="M15 24 L18 8 L28 20 Z" fill="${pet.ear}" stroke="#090D16" stroke-width="2.4"/>
+              <path d="M41 24 L38 8 L28 20 Z" fill="${pet.ear}" stroke="#090D16" stroke-width="2.4"/>
+              <ellipse cx="28" cy="27" rx="15" ry="12" fill="${pet.fur}" stroke="#090D16" stroke-width="2.4"/>
+              <circle cx="23" cy="26" r="2.8" fill="${pet.eye}"/>
+              <circle cx="33" cy="26" r="2.8" fill="${pet.eye}"/>
+              <circle cx="28" cy="31" r="2.3" fill="#090D16"/>
+              <path d="M25 35 Q28 38 31 35" fill="none" stroke="#090D16" stroke-width="2" stroke-linecap="round"/>
+              <rect x="19" y="39" width="19" height="12" rx="5" fill="${pet.fur}" stroke="#090D16" stroke-width="2.4"/>
+              <rect x="21" y="50" width="4.5" height="7" rx="2" fill="${pet.fur}" stroke="#090D16" stroke-width="2"/>
+              <rect x="31" y="50" width="4.5" height="7" rx="2" fill="${pet.fur}" stroke="#090D16" stroke-width="2"/>
+              <path d="M38 43 Q52 34 54 24" fill="none" stroke="${pet.ear}" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+          ` : pet.kind === 'ship' ? `
             <svg viewBox="0 0 64 64" class="h-14 w-14 shrink-0 mb-2 animate-float">
               <path d="M22 44 L17 57 L26 48 Z" fill="#FACC15" stroke="#090D16" stroke-width="2"/>
               <path d="M42 44 L47 57 L38 48 Z" fill="#FACC15" stroke="#090D16" stroke-width="2"/>
@@ -618,6 +701,19 @@
               <circle cx="20" cy="34" r="2.5" fill="#A3E635"/>
               <circle cx="32" cy="35" r="2.5" fill="#FACC15"/>
               <circle cx="44" cy="34" r="2.5" fill="#A3E635"/>
+            </svg>
+          ` : pet.kind === 'alien' ? `
+            <svg viewBox="0 0 64 64" class="h-14 w-14 shrink-0 mb-1 animate-float">
+              <line x1="25" y1="16" x2="21" y2="8" stroke="${pet.ear}" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="21" cy="7" r="3" fill="#FACC15" stroke="#090D16" stroke-width="1.5"/>
+              <line x1="39" y1="16" x2="43" y2="8" stroke="${pet.ear}" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="43" cy="7" r="3" fill="#FACC15" stroke="#090D16" stroke-width="1.5"/>
+              <ellipse cx="32" cy="27" rx="16" ry="12" fill="${pet.fur}" stroke="#090D16" stroke-width="2.5"/>
+              <ellipse cx="26" cy="27" rx="3" ry="5" fill="${pet.eye}"/>
+              <ellipse cx="38" cy="27" rx="3" ry="5" fill="${pet.eye}"/>
+              <rect x="23" y="40" width="18" height="12" rx="4" fill="#38BDF8" stroke="#090D16" stroke-width="2.2"/>
+              <rect x="25" y="52" width="5" height="7" rx="2" fill="${pet.fur}" stroke="#090D16" stroke-width="2"/>
+              <rect x="34" y="52" width="5" height="7" rx="2" fill="${pet.fur}" stroke="#090D16" stroke-width="2"/>
             </svg>
           ` : `
             <svg viewBox="0 0 64 64" class="h-14 w-14 shrink-0 mb-1 animate-float">
@@ -673,6 +769,7 @@
         saveAccountToCloud(state);
       }
 
+      state.activeTab = 'inicio';
       registerColonistGlobally(state);
       selectedMapPlanet = state.profile.planet || 'Lua';
       activeKey = key;
@@ -680,7 +777,7 @@
       clearLoginError();
       document.getElementById('login-screen').classList.add('hidden');
       renderApp();
-      showToast(`Conta ${state.handle} acessada!`);
+      showToast(`Conta ${state.handle} acessada! Bem-vindo ao Início.`);
     }
 
     function openAccountSwitcher() {
@@ -690,8 +787,50 @@
       document.getElementById('login-screen').classList.remove('hidden');
     }
 
-    function deleteMyOwnAccountData() {
+    function openDeleteReasonModal() {
       if (!state || !activeKey) return;
+      const modal = document.getElementById('wallet-modal');
+      const body = document.getElementById('wallet-modal-body');
+
+      body.innerHTML = `
+        <h3 class="font-display text-lg font-bold pr-6">Por qual motivo?</h3>
+        <p class="text-xs font-bold text-slate-600 mt-1">
+          Conta: <span class="text-slate-900">${esc(state.handle)}</span>. Escreva o motivo abaixo para enviar ao criador antes de apagar seus dados (ou clique no X para cancelar).
+        </p>
+        <div class="mt-3 space-y-3">
+          <textarea
+            id="delete-reason-input"
+            rows="3"
+            placeholder="Escreva o motivo aqui..."
+            class="w-full px-3 py-2 rounded-xl border-2 border-[#090D16] text-xs font-bold bg-white"
+          ></textarea>
+          <button type="button" onclick="confirmDeleteWithReason()" class="btn-cosmic w-full py-2.5 rounded-2xl bg-rose-600 text-white text-xs font-black">
+            Enviar motivo e deletar meus dados
+          </button>
+        </div>
+      `;
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function confirmDeleteWithReason() {
+      if (!state || !activeKey) return;
+      const reasonInput = document.getElementById('delete-reason-input');
+      const reason = String(reasonInput ? reasonInput.value : '').trim();
+
+      if (!reason) {
+        showToast('Escreva por qual motivo você quer deletar.', 'bg-rose-950 text-rose-200 border-rose-400');
+        return;
+      }
+
+      globalState.deletionReasons.unshift({
+        id: `del_${Date.now()}`,
+        handle: state.handle,
+        reason,
+        day: globalState.day
+      });
+
       const myHandle = state.handle;
       const myPin = state.pin;
 
@@ -705,6 +844,7 @@
         c => normalizeHandle(c.handle).toLowerCase() !== activeKey
       );
       saveGlobalState();
+      closeWalletModal();
 
       localStorage.removeItem(ACTIVE_ACCOUNT_KEY);
       activeKey = null;
@@ -715,7 +855,69 @@
       document.getElementById('login-pin').value = myPin;
       clearLoginError();
       document.getElementById('login-screen').classList.remove('hidden');
-      showToast(`Seus dados de ${myHandle} foram deletados.`);
+      showToast(`Motivo enviado e dados de ${myHandle} deletados.`);
+    }
+
+    function getPromoRemainingDays(promo) {
+      const createdAt = globalState.codeCreatedAt && globalState.codeCreatedAt[promo.code];
+      if (!createdAt) return promo.durationDays;
+      const elapsedDays = Math.floor((Date.now() - createdAt) / ONE_DAY_MS);
+      return Math.max(0, promo.durationDays - elapsedDays);
+    }
+
+    function redeemPromoCode() {
+      if (!state) return;
+      const input = document.getElementById('promo-code-input');
+      const typed = String(input ? input.value : '').trim().toLowerCase();
+
+      if (!typed) {
+        showToast('Digite um código para resgatar.', 'bg-rose-950 text-rose-200 border-rose-400');
+        return;
+      }
+
+      const promo = PROMO_CODES.find(c => c.code.toLowerCase() === typed);
+      if (!promo) {
+        showToast('Código inválido.', 'bg-rose-950 text-rose-200 border-rose-400');
+        return;
+      }
+
+      if (!globalState.codeCreatedAt[promo.code]) {
+        globalState.codeCreatedAt[promo.code] = Date.now();
+        saveGlobalState();
+      }
+
+      const daysLeft = getPromoRemainingDays(promo);
+      if (daysLeft <= 0) {
+        showToast(`O código "${promo.code}" expirou após ${promo.durationDays} dias.`, 'bg-rose-950 text-rose-200 border-rose-400');
+        return;
+      }
+
+      if (state.redeemedCodes.includes(promo.code)) {
+        showToast(`Você já resgatou o código "${promo.code}" nesta conta.`);
+        return;
+      }
+
+      state.redeemedCodes.push(promo.code);
+      state.stars += promo.reward;
+      persistCurrentState();
+      if (input) input.value = '';
+      renderApp();
+      showToast(`Código "${promo.code}" resgatado! +${promo.reward} moedas/estrelas!`);
+    }
+
+    function claimDailyStars() {
+      if (!state) return;
+      if (state.lastDailyClaimDay === globalState.day) {
+        showToast(`Você já pegou as +${DAILY_STARS_REWARD} estrelas de hoje (Dia ${globalState.day})!`);
+        return;
+      }
+      const todayKey = getCurrentWeekDayKey();
+      state.lastDailyClaimDay = globalState.day;
+      state.claimedWeekDays[todayKey] = true;
+      state.stars += DAILY_STARS_REWARD;
+      persistCurrentState();
+      renderApp();
+      showToast(`+${DAILY_STARS_REWARD} estrelas diárias resgatadas!`);
     }
 
     function updateProfileBaseFromButton() {
@@ -786,7 +988,7 @@
       state.missionCooldownUntil = now + ONE_HOUR_MS;
       persistCurrentState();
       renderApp();
-      showToast(`+${currentMission.reward} estrelas! A missão muda em 1 hora.`);
+      showToast(`+${currentMission.reward} estrelas! Próxima missão em 1 hora.`);
     }
 
     function advanceOneHourByAdmin() {
@@ -986,7 +1188,7 @@
 
       saveGlobalState();
       renderApp();
-      showToast(`Avançou para o Dia ${globalState.day}!`);
+      showToast(`Avançou para o Dia ${globalState.day}! Estrelas diárias liberadas!`);
     }
 
     function switchTab(tab) {
@@ -1016,10 +1218,66 @@
       }
     }
 
+    function renderCodigos() {
+      const redeemed = state.redeemedCodes || [];
+      return `
+        <div class="p-4 space-y-4 tab-content">
+          <div class="orbit-card p-4 space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <h2 class="font-display text-lg font-bold">Códigos da Colônia</h2>
+              <span class="px-2.5 py-1 rounded-full bg-[#0F172A] text-[#A3E635] text-xs font-black">
+                Até 30 dias
+              </span>
+            </div>
+
+            <p class="text-xs font-bold text-slate-700">
+              Digite um código ativo para ganhar moedas/estrelas. Cada código funciona por até alguns dias.
+            </p>
+
+            <div class="flex gap-2">
+              <input
+                id="promo-code-input"
+                type="text"
+                placeholder="Ex: alien aura"
+                onkeydown="if (event.key === 'Enter') { event.preventDefault(); redeemPromoCode(); }"
+                class="flex-1 px-3 py-2 rounded-xl border-2 border-[#090D16] text-xs font-bold bg-white"
+              />
+              <button type="button" onclick="redeemPromoCode()" class="btn-cosmic-sm px-3.5 py-2 rounded-xl bg-[#84CC16] text-[#090D16] text-xs font-black shrink-0">
+                Resgatar
+              </button>
+            </div>
+
+            <div class="pt-2 border-t border-slate-300 space-y-2">
+              <h3 class="font-display text-sm font-bold text-slate-900">Códigos ativos:</h3>
+              ${PROMO_CODES.map(promo => {
+                const daysLeft = getPromoRemainingDays(promo);
+                const alreadyUsed = redeemed.includes(promo.code);
+                return `
+                  <div class="p-3 rounded-2xl bg-slate-100 border-2 border-[#090D16] space-y-1">
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="text-xs font-black text-slate-950">"${esc(promo.code)}"</span>
+                      <span class="px-2 py-0.5 rounded-full bg-[#0F172A] text-[#FACC15] text-[10px] font-black">
+                        +${promo.reward} moedas
+                      </span>
+                    </div>
+                    <div class="text-[11px] font-bold text-slate-700">
+                      ${daysLeft > 0 ? `Válido por até ${daysLeft} dia(s)` : 'Expirado'} • ${alreadyUsed ? 'Já resgatado' : 'Disponível'}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     function renderInicio() {
       const onlineStatus = rtdb
         ? `<span class="text-emerald-400">Online (sincronizado)</span>`
         : `<span class="text-amber-300">Modo local</span>`;
+      const dailyClaimed = state.lastDailyClaimDay === globalState.day;
+      const claimedMap = state.claimedWeekDays || {};
 
       return `
         <div class="p-4 space-y-4 tab-content">
@@ -1035,6 +1293,41 @@
               Base: <span class="text-white">${esc(state.profile.base)}</span> • Estrelas: <span class="text-[#FACC15]">${state.stars}</span>
             </p>
             <div class="mt-2 text-[11px] font-extrabold">${onlineStatus}</div>
+          </div>
+
+          <div class="orbit-card p-4 space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <h2 class="font-display text-base font-bold">Moedas / Estrelas Diárias</h2>
+              <span class="px-2.5 py-1 rounded-full bg-[#0F172A] text-[#FACC15] text-xs font-black">
+                +${DAILY_STARS_REWARD} estrelas/dia
+              </span>
+            </div>
+
+            <div class="grid grid-cols-7 gap-1 text-center">
+              ${WEEK_DAYS.map(dayItem => {
+                const hasX = Boolean(claimedMap[dayItem.key]);
+                return `
+                  <div class="flex flex-col items-center rounded-xl py-1.5 px-0.5 border-2 ${hasX ? 'bg-emerald-100 border-[#090D16]' : 'bg-slate-100 border-slate-300'}">
+                    <span class="text-[10px] font-black text-slate-800 leading-none">${dayItem.label}</span>
+                    <span class="mt-1 h-4 flex items-center justify-center text-xs font-black ${hasX ? 'text-rose-600' : 'text-slate-400'}">
+                      ${hasX ? 'X' : ''}
+                    </span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+
+            <p class="text-xs font-bold text-slate-700">
+              Cada dia você ganha ${DAILY_STARS_REWARD} estrelas. Dias resgatados ficam com X.
+            </p>
+            ${dailyClaimed
+              ? `<button type="button" disabled class="w-full py-2.5 rounded-2xl bg-slate-300 text-slate-700 border-2 border-slate-400 text-xs font-black">
+                   Resgatado hoje (Dia ${globalState.day})
+                 </button>`
+              : `<button type="button" onclick="claimDailyStars()" class="btn-cosmic w-full py-2.5 rounded-2xl bg-[#FACC15] text-[#090D16] text-xs font-black">
+                   Pegar +${DAILY_STARS_REWARD} Estrelas Diárias
+                 </button>`
+            }
           </div>
         </div>
       `;
@@ -1056,7 +1349,7 @@
           </div>
 
           <div class="orbit-card p-4 space-y-2.5">
-            <h3 class="font-display text-base font-bold">Acessórios (Óculos, Brincos, Chapéu)</h3>
+            <h3 class="font-display text-base font-bold">Acessórios (Coroa, Óculos, Brincos, Chapéu)</h3>
             <div class="grid grid-cols-1 gap-2">
               ${ACCESSORIES.map(acc => {
                 const owned = state.ownedAccessories.includes(acc.id);
@@ -1220,32 +1513,62 @@
       const now = Date.now();
       syncMissionTimer(now);
 
-      const mission = MISSION_ROTATION[state.missionSlot % MISSION_ROTATION.length];
+      const activeSlot = state.missionSlot % MISSION_ROTATION.length;
       const onCooldown = Boolean(state.missionCooldownUntil && now < state.missionCooldownUntil);
       const remainingText = onCooldown ? formatRemainingMs(state.missionCooldownUntil - now) : '';
+      const reasonsList = globalState.deletionReasons || [];
 
       return `
         <div class="p-4 space-y-4 tab-content">
           <div class="orbit-card p-4 space-y-3">
             <div class="flex items-center justify-between gap-2">
-              <h2 class="font-display text-lg font-bold">Missão da Hora</h2>
+              <h2 class="font-display text-lg font-bold">2 Missões da Colônia</h2>
               <span class="px-2.5 py-1 rounded-full bg-[#0F172A] text-[#FACC15] text-xs font-black">
-                +${mission.reward} estrelas
+                +${MISSION_STARS_REWARD} estrelas cada
               </span>
             </div>
 
             <p class="text-xs font-bold text-slate-700">
-              Você só pode clicar uma vez. Depois de 1 hora, a missão muda automaticamente.
+              São 2 missões de ${MISSION_STARS_REWARD} estrelas cada. Conclua a missão ativa e aguarde 1 hora para alternar.
             </p>
 
-            ${onCooldown
-              ? `<button type="button" disabled class="w-full py-2.5 rounded-2xl bg-slate-300 text-slate-700 border-2 border-slate-400 text-xs font-black">
-                   Concluída • Muda em ${remainingText}
-                 </button>`
-              : `<button type="button" onclick="claimTimedMission()" class="btn-cosmic w-full py-2.5 rounded-2xl ${mission.btnColor} text-[#090D16] text-xs font-black">
-                   ${mission.label} (+${mission.reward} estrelas)
-                 </button>`
-            }
+            <div class="space-y-2.5">
+              ${MISSION_ROTATION.map((mission, idx) => {
+                const isCurrent = idx === activeSlot;
+                if (!isCurrent) {
+                  return `
+                    <div class="p-3 rounded-2xl bg-slate-100 border-2 border-slate-300 flex items-center justify-between gap-2 opacity-80">
+                      <span class="text-xs font-extrabold text-slate-700">${mission.label}</span>
+                      <span class="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 text-[10px] font-black">+${mission.reward} estrelas • Próxima</span>
+                    </div>
+                  `;
+                }
+                if (onCooldown) {
+                  return `
+                    <div class="p-3 rounded-2xl bg-slate-200 border-2 border-slate-400 space-y-2">
+                      <div class="flex items-center justify-between text-xs font-black text-slate-800">
+                        <span>${mission.label}</span>
+                        <span>+${mission.reward} estrelas</span>
+                      </div>
+                      <button type="button" disabled class="w-full py-2 rounded-xl bg-slate-300 text-slate-700 text-xs font-black">
+                        Concluída • Muda em ${remainingText}
+                      </button>
+                    </div>
+                  `;
+                }
+                return `
+                  <div class="p-3 rounded-2xl bg-slate-100 border-2 border-[#090D16] space-y-2">
+                    <div class="flex items-center justify-between text-xs font-black text-slate-900">
+                      <span>${mission.label} (Ativa)</span>
+                      <span>+${mission.reward} estrelas</span>
+                    </div>
+                    <button type="button" onclick="claimTimedMission()" class="btn-cosmic w-full py-2.5 rounded-2xl ${mission.btnColor} text-[#090D16] text-xs font-black">
+                      Completar ${mission.label} (+${mission.reward} estrelas)
+                    </button>
+                  </div>
+                `;
+              }).join('')}
+            </div>
           </div>
 
           <div class="orbit-card p-4 space-y-3">
@@ -1277,7 +1600,7 @@
                  </div>`
               : `<div class="space-y-3">
                    <button type="button" onclick="advanceOneHourByAdmin()" class="btn-cosmic-sm w-full py-2 rounded-xl bg-[#38BDF8] text-[#090D16] text-xs font-black">
-                     Avançar 1 Hora (Mudar Missão)
+                     Avançar 1 Hora (Alternar Missão)
                    </button>
 
                    <div class="pt-2 border-t border-slate-300 space-y-2">
@@ -1335,6 +1658,23 @@
                          Deletar
                        </button>
                      </div>
+                   </div>
+
+                   <div class="pt-2 border-t border-slate-300 space-y-1.5">
+                     <div class="text-xs font-black text-slate-900">
+                       Motivos enviados ao deletar dados (${reasonsList.length}):
+                     </div>
+                     ${reasonsList.length === 0
+                       ? `<p class="text-[11px] font-bold text-slate-600">Nenhum motivo recebido ainda.</p>`
+                       : `<div class="space-y-1.5 max-h-36 overflow-y-auto">
+                            ${reasonsList.map(item => `
+                              <div class="p-2 rounded-xl bg-rose-50 border border-rose-300 text-[11px]">
+                                <span class="font-black text-rose-900">${esc(item.handle)} (Dia ${item.day}):</span>
+                                <span class="font-bold text-slate-800"> ${esc(item.reason)}</span>
+                              </div>
+                            `).join('')}
+                          </div>`
+                     }
                    </div>
 
                    <div class="text-xs font-extrabold text-slate-800 bg-slate-200/80 rounded-xl p-2.5">
@@ -1410,7 +1750,7 @@
               </div>
             </div>
 
-            <button type="button" onclick="deleteMyOwnAccountData()" class="btn-cosmic-sm w-full py-2 rounded-xl bg-rose-600 text-white text-xs font-black mt-2">
+            <button type="button" onclick="openDeleteReasonModal()" class="btn-cosmic-sm w-full py-2 rounded-xl bg-rose-600 text-white text-xs font-black mt-2">
               Deletar apenas meus dados (${esc(state.handle)})
             </button>
           </div>
@@ -1634,6 +1974,7 @@
         inicio: renderInicio,
         loja: renderLoja,
         missoes: renderMissoes,
+        codigos: renderCodigos,
         passe: renderPasse,
         mapa: renderMapa,
         bases: renderMapa,
@@ -1663,5 +2004,9 @@
   </script>
 </body>
 </html>
+
+
+
+
 
 
